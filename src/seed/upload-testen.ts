@@ -22,14 +22,15 @@ async function main() {
   const blobAktiv = Boolean(process.env.BLOB_READ_WRITE_TOKEN)
   console.log(`\nSpeicher: ${blobAktiv ? 'Vercel Blob' : 'lokaler Ordner /media'}`)
 
-  // Hochkantes Testbild, etwa im Format eines A4-Plakats.
-  const datei = path.join(os.tmpdir(), 'rbb-upload-test.png')
+  // Dateiname frei wählbar – Leerzeichen und Sonderzeichen sind der Knackpunkt.
+  const name = process.argv[2] ?? 'rbb-upload-test.png'
+  const datei = path.join(os.tmpdir(), name)
   await sharp({
-    create: { width: 589, height: 830, channels: 3, background: { r: 240, g: 60, b: 48 } },
+    create: { width: 589, height: 830, channels: 4, background: { r: 240, g: 60, b: 48, alpha: 1 } },
   })
     .png()
     .toFile(datei)
-  console.log(`Testbild: 589×830 (hochkant), ${fs.statSync(datei).size} Bytes\n`)
+  console.log(`Testbild: «${name}», 589×830 (hochkant), ${fs.statSync(datei).size} Bytes\n`)
 
   try {
     const bild = await payload.create({

@@ -735,7 +735,7 @@ export interface PayloadMigrationsSelect<T extends boolean = true> {
   createdAt?: T;
 }
 /**
- * Regeln, Sommertraining, Shootingtraining und Goalie-Training.
+ * Regeln, Sommertraining und Goalie-Training.
  *
  * This interface was referenced by `Config`'s JSON-Schema
  * via the `definition` "eishockey".
@@ -766,7 +766,7 @@ export interface Eishockey {
   } | null;
   regelwerkLink?: string | null;
   /**
-   * Sommertraining, Shootingtraining, Goalie-Training usw.
+   * Sommertraining, Goalie-Training usw.
    */
   angebote?:
     | {

@@ -46,6 +46,11 @@ const datenbank = istPostgres
  * Auf Vercel ist das Dateisystem nicht beschreibbar – hochgeladene Bilder
  * müssen in den Blob-Speicher. Ohne Token (lokal) bleibt alles im Ordner
  * /media liegen.
+ *
+ * «clientUploads» ist dabei entscheidend: Vercel begrenzt Anfragen an den
+ * Server auf 4,5 MB. Ein Handyfoto oder ein Screenshot ist schnell grösser und
+ * würde daran scheitern. Mit dieser Einstellung wandert die Datei direkt vom
+ * Browser in den Blob-Speicher, ohne über den Server zu laufen.
  */
 const speicher = process.env.BLOB_READ_WRITE_TOKEN
   ? [
@@ -53,6 +58,7 @@ const speicher = process.env.BLOB_READ_WRITE_TOKEN
         enabled: true,
         collections: { media: true, dokumente: true },
         token: process.env.BLOB_READ_WRITE_TOKEN,
+        clientUploads: true,
       }),
     ]
   : []
