@@ -46,7 +46,8 @@ async function main() {
         email: 'admin@rot-blau.ch',
         password: 'demo',
         role: 'admin',
-      } as never,
+      },
+      draft: false,
       overrideAccess: true,
     })
 
