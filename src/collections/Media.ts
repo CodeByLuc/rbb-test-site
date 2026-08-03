@@ -19,11 +19,19 @@ export const Media: CollectionConfig = {
   upload: {
     mimeTypes: ['image/*'],
     focalPoint: true,
+    /**
+     * Nur die Breite vorgeben, das Seitenverhältnis bleibt erhalten.
+     *
+     * Früher stand hier zusätzlich eine Höhe. Das schnitt hochkante Bilder
+     * quer zu – bei einem Plakat fielen Kopf und Fuss weg – und für Bilder,
+     * die kleiner als die verlangte Grösse waren, entstand gar keine Variante.
+     * Den sichtbaren Zuschnitt übernimmt das Layout mit «object-cover».
+     */
     imageSizes: [
-      { name: 'thumbnail', width: 400, height: 300, position: 'centre' },
-      { name: 'card', width: 900, height: 600, position: 'centre' },
-      { name: 'portrait', width: 600, height: 800, position: 'centre' },
-      { name: 'hero', width: 1800, height: 900, position: 'centre' },
+      { name: 'thumbnail', width: 400, withoutEnlargement: true },
+      { name: 'card', width: 900, withoutEnlargement: true },
+      { name: 'portrait', width: 600, withoutEnlargement: true },
+      { name: 'hero', width: 1800, withoutEnlargement: true },
     ],
   },
   fields: [
