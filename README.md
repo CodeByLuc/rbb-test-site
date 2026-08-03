@@ -118,7 +118,7 @@ aktualisiert statt ein zweiter angelegt.
 Texte, die keine Beiträge sind, stehen im Redaktionsbereich unter
 **Seiteninhalte**:
 
-- **Seite «Eishockey»** – Regeln, Sommertraining, Shootingtraining, Goalie-Training
+- **Seite «Eishockey»** – Regeln, Sommertraining, Goalie-Training
 - **Seite «Verein»** – Geschichte, Aktuelles, Vorstand, Mitgliedschaft
 - **Einstellungen** – Logo, Kontakt, soziale Medien, Sponsoring-Unterlagen
 

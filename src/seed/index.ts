@@ -245,7 +245,7 @@ async function main() {
         'Ab Mai wird ausserhalb des Eises trainiert: Kraft, Koordination und Schusstechnik stehen auf dem Programm.',
       inhalt: richText([
         'Nach der Saison ist vor der Saison. Ab Mai startet unser Sommertraining, offen für alle Aktiven und den älteren Nachwuchs.',
-        'Im Zentrum stehen Athletik, Koordination und – im Shootingtraining – die Schusstechnik. Die genauen Termine stehen auf der Seite «Eishockey».',
+        'Im Zentrum stehen Athletik, Koordination und Schusstechnik. Die genauen Termine stehen auf der Seite «Eishockey».',
       ]),
       datum: '2026-04-20T07:00:00.000Z',
       team: '1. Mannschaft',
@@ -318,14 +318,6 @@ async function main() {
             'Athletik, Koordination und Ausdauer als Grundlage für die neue Saison. Für Aktive und den älteren Nachwuchs.',
           termine: 'Mai bis August, jeweils Dienstag 19:00 – 20:30',
           ort: 'Sportplatz Weyermannshaus',
-          kontakt: 'training@rot-blau.ch',
-        },
-        {
-          titel: 'Shootingtraining',
-          beschreibung:
-            'Schusstechnik, Handgelenke und Präzision – auf der Schussanlage, unabhängig vom Eis.',
-          termine: 'Ganzjährig, Donnerstag 18:30 – 20:00',
-          ort: 'Trainingshalle Bümpliz',
           kontakt: 'training@rot-blau.ch',
         },
         {

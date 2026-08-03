@@ -8,7 +8,7 @@ export const Eishockey: GlobalConfig = {
   label: 'Seite «Eishockey»',
   admin: {
     group: 'Seiteninhalte',
-    description: 'Regeln, Sommertraining, Shootingtraining und Goalie-Training.',
+    description: 'Regeln, Sommertraining und Goalie-Training.',
   },
   access: { read: isPublic, update: isAdmin },
   fields: [
@@ -37,7 +37,7 @@ export const Eishockey: GlobalConfig = {
       label: 'Trainingsangebote',
       labels: { singular: 'Angebot', plural: 'Angebote' },
       admin: {
-        description: 'Sommertraining, Shootingtraining, Goalie-Training usw.',
+        description: 'Sommertraining, Goalie-Training usw.',
       },
       fields: [
         {
@@ -45,7 +45,7 @@ export const Eishockey: GlobalConfig = {
           type: 'text',
           label: 'Titel',
           required: true,
-          admin: { placeholder: 'z. B. Shootingtraining' },
+          admin: { placeholder: 'z. B. Goalie-Training' },
         },
         { name: 'beschreibung', type: 'textarea', label: 'Beschreibung' },
         {

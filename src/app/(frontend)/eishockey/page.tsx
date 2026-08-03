@@ -9,7 +9,7 @@ export const revalidate = 3600
 
 export const metadata: Metadata = {
   title: 'Eishockey',
-  description: 'Regeln, Sommertraining, Shootingtraining und Goalie-Training beim EHC Rot-Blau.',
+  description: 'Regeln, Sommertraining und Goalie-Training beim EHC Rot-Blau.',
 }
 
 export default async function EishockeySeite() {
