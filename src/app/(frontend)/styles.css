@@ -1,0 +1,204 @@
+@import 'tailwindcss';
+
+/*
+  Die Bildsprache kommt direkt aus dem Vereinswappen:
+  drei Bänder in Rot – Blau – Rot, durch weisse Linien getrennt,
+  und die nach unten spitz zulaufende Schildform.
+  Die Farben sind aus der Logodatei ausgelesen.
+*/
+@theme {
+  --color-rot: #f03c30;
+  --color-rot-dunkel: #bf2a20;
+  --color-rot-tief: #8f1d16;
+  --color-blau: #18549c;
+  --color-blau-dunkel: #0f3a70;
+  --color-nacht: #0a1c36;
+  --color-nacht-tief: #050f1e;
+  --color-eis: #eef1f7;
+  --color-linie: #d3dae6;
+  --color-grau: #4f5a6b;
+
+  --font-display: var(--schrift-display), 'Arial Narrow', sans-serif;
+  --font-sans: var(--schrift-text), system-ui, sans-serif;
+}
+
+@utility inhalt {
+  margin-inline: auto;
+  width: 100%;
+  max-width: 82rem;
+  padding-inline: 1.25rem;
+}
+
+@layer base {
+  body {
+    background-color: var(--color-eis);
+    color: #0d1420;
+    font-family: var(--font-sans);
+    -webkit-font-smoothing: antialiased;
+  }
+
+  h1,
+  h2,
+  h3,
+  h4 {
+    font-family: var(--font-display);
+    font-weight: 800;
+    letter-spacing: -0.015em;
+    text-transform: uppercase;
+    line-height: 0.95;
+  }
+
+  :focus-visible {
+    outline: 3px solid var(--color-rot);
+    outline-offset: 2px;
+  }
+}
+
+/* Die Bänder des Wappens als Trennlinie. */
+@utility trikotband {
+  height: 0.5rem;
+  background-image: linear-gradient(
+    to bottom,
+    var(--color-rot) 0 40%,
+    #fff 40% 50%,
+    var(--color-blau) 50% 90%,
+    #fff 90% 100%
+  );
+}
+
+@utility trikotband-schmal {
+  height: 0.25rem;
+  background-image: linear-gradient(
+    to bottom,
+    var(--color-rot) 0 45%,
+    var(--color-blau) 45% 100%
+  );
+}
+
+/* Spitze Unterkante wie beim Wappen. */
+@utility schild-kante {
+  clip-path: polygon(0 0, 100% 0, 100% calc(100% - 3.5rem), 50% 100%, 0 calc(100% - 3.5rem));
+}
+
+/* Schräg angeschnittene Ecke – gibt Kacheln Tempo. */
+@utility ecke-schraeg {
+  clip-path: polygon(0 0, 100% 0, 100% 100%, 1.75rem 100%, 0 calc(100% - 1.75rem));
+}
+
+/* Grosse Zahl im Anzeigetafel-Stil. */
+@utility tafelzahl {
+  font-family: var(--font-display);
+  font-weight: 800;
+  font-variant-numeric: tabular-nums;
+  letter-spacing: -0.03em;
+  line-height: 0.85;
+}
+
+/* Abschnittstitel mit rotem Schrägbalken davor. */
+@utility abschnittstitel {
+  position: relative;
+  padding-inline-start: 1.1rem;
+
+  &::before {
+    content: '';
+    position: absolute;
+    inset-block: 0.1em 0.15em;
+    inset-inline-start: 0;
+    width: 0.4rem;
+    background-color: var(--color-rot);
+    transform: skewX(-12deg);
+  }
+}
+
+/* Eisfläche-Anmutung für dunkle Abschnitte. */
+@utility eisglanz {
+  background-image:
+    radial-gradient(120% 80% at 15% -10%, rgba(255, 255, 255, 0.14), transparent 60%),
+    repeating-linear-gradient(
+      108deg,
+      rgba(240, 60, 48, 0.16) 0 2px,
+      transparent 2px 30px
+    );
+}
+
+/* Fliesstext aus dem Redaktionssystem. */
+@utility fliesstext {
+  & p {
+    margin-block: 0 1rem;
+    line-height: 1.7;
+  }
+  & h2 {
+    margin-block: 2.25rem 0.75rem;
+    font-size: 1.9rem;
+    color: var(--color-blau);
+  }
+  & h3 {
+    margin-block: 1.75rem 0.5rem;
+    font-size: 1.4rem;
+    color: var(--color-blau);
+  }
+  & ul,
+  & ol {
+    margin-block: 0 1rem;
+    padding-inline-start: 1.5rem;
+    line-height: 1.7;
+  }
+  & ul {
+    list-style: none;
+    & li {
+      position: relative;
+      &::before {
+        content: '';
+        position: absolute;
+        inset-inline-start: -1.1rem;
+        top: 0.6em;
+        width: 0.5rem;
+        height: 0.5rem;
+        background-color: var(--color-rot);
+        transform: skewX(-12deg);
+      }
+    }
+  }
+  & ol {
+    list-style: decimal;
+  }
+  & li {
+    margin-block: 0.4rem;
+  }
+  & a {
+    color: var(--color-rot-dunkel);
+    font-weight: 600;
+    text-decoration: underline;
+    text-underline-offset: 3px;
+  }
+  & blockquote {
+    margin-block: 1.75rem;
+    border-inline-start: 5px solid var(--color-rot);
+    background: rgba(24, 84, 156, 0.05);
+    padding: 1rem 1.25rem;
+    font-family: var(--font-display);
+    font-size: 1.4rem;
+    font-weight: 600;
+    text-transform: uppercase;
+    line-height: 1.15;
+    color: var(--color-blau);
+  }
+  & hr {
+    margin-block: 2rem;
+    border: 0;
+    height: 0.25rem;
+    background-image: linear-gradient(
+      to bottom,
+      var(--color-rot) 0 45%,
+      var(--color-blau) 45% 100%
+    );
+  }
+  & img {
+    margin-block: 1.5rem;
+    max-width: 100%;
+    height: auto;
+  }
+  & strong {
+    font-weight: 700;
+  }
+}
