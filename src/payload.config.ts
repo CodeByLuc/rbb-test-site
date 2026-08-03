@@ -1,4 +1,6 @@
+import { postgresAdapter } from '@payloadcms/db-postgres'
 import { sqliteAdapter } from '@payloadcms/db-sqlite'
+import { vercelBlobStorage } from '@payloadcms/storage-vercel-blob'
 import { de } from '@payloadcms/translations/languages/de'
 import path from 'path'
 import { buildConfig } from 'payload'
@@ -18,6 +20,42 @@ import { einfacherEditor } from './lib/editor'
 
 const filename = fileURLToPath(import.meta.url)
 const dirname = path.dirname(filename)
+
+/**
+ * Lokal läuft die Website auf einer SQLite-Datei, in Produktion auf Neon
+ * (PostgreSQL). Ausschlaggebend ist die Verbindungsadresse: sieht sie wie
+ * PostgreSQL aus, wird der Postgres-Adapter genommen.
+ *
+ * Beide Namen werden akzeptiert, weil Neon und Vercel unterschiedlich benennen.
+ */
+const verbindung = process.env.DATABASE_URI || process.env.DATABASE_URL || ''
+const istPostgres = verbindung.startsWith('postgres://') || verbindung.startsWith('postgresql://')
+
+const datenbank = istPostgres
+  ? postgresAdapter({
+      pool: { connectionString: verbindung },
+      // Legt fehlende Tabellen beim ersten Start selbst an. Ohne dies müsste
+      // vor jedem Deploy von Hand eine Migration laufen.
+      push: true,
+    })
+  : sqliteAdapter({
+      client: { url: verbindung || 'file:./rot-blau.db' },
+    })
+
+/**
+ * Auf Vercel ist das Dateisystem nicht beschreibbar – hochgeladene Bilder
+ * müssen in den Blob-Speicher. Ohne Token (lokal) bleibt alles im Ordner
+ * /media liegen.
+ */
+const speicher = process.env.BLOB_READ_WRITE_TOKEN
+  ? [
+      vercelBlobStorage({
+        enabled: true,
+        collections: { media: true, dokumente: true },
+        token: process.env.BLOB_READ_WRITE_TOKEN,
+      }),
+    ]
+  : []
 
 export default buildConfig({
   admin: {
@@ -41,11 +79,8 @@ export default buildConfig({
   typescript: {
     outputFile: path.resolve(dirname, 'payload-types.ts'),
   },
-  db: sqliteAdapter({
-    client: {
-      url: process.env.DATABASE_URI || 'file:./rot-blau.db',
-    },
-  }),
+  db: datenbank,
+  plugins: speicher,
   sharp,
   upload: {
     limits: {
