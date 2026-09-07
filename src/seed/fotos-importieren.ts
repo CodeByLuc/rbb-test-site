@@ -2,23 +2,34 @@ import 'dotenv/config'
 
 import configPromise from '@payload-config'
 import fs from 'fs'
+import os from 'os'
 import path from 'path'
 import { getPayload } from 'payload'
+import sharp from 'sharp'
+import type { Payload } from 'payload'
 
 /**
- * Lädt aufbereitete Fotos in die Mediathek und verknüpft sie mit einem Team.
+ * Lädt Fotos in die Mediathek und verknüpft sie mit einem Team.
  *
- *   npx tsx src/seed/fotos-importieren.ts <ordner> [Teamname] [--beitrag "Titel"]
+ * Ein Ordner, ein Team:
+ *   npm exec -- tsx src/seed/fotos-importieren.ts "<ordner>" "U12"
  *
- * Beispiel:
- *   npx tsx src/seed/fotos-importieren.ts ./u9-web U9 --beitrag "Turniertag der U9"
+ * Alle Teams auf einmal – jeder Unterordner ist ein Team («u12», «damen», …):
+ *   npm exec -- tsx src/seed/fotos-importieren.ts "<elternordner>" --pro-ordner
  *
- * Das erste Bild wird zum Teamfoto, sofern noch keines hinterlegt ist. Mit
- * «--beitrag» entsteht zusätzlich ein Beitrag mit allen Bildern als Galerie.
+ * Zusätzlich ein Beitrag mit Bildergalerie:
+ *   … --beitrag "Turniertag der U9"
  *
- * Die Fotos vorher mit «fotos-aufbereiten.ts» herunterrechnen – direkt aus der
- * Kamera sind sie mehrere Megabyte gross.
+ * Vorhandene Bilder erneut hochladen (etwa nach Einrichten des Blob-Speichers):
+ *   … --erneuern
+ *
+ * Zu grosse Bilder werden vor dem Hochladen selbst heruntergerechnet – Fotos
+ * direkt aus der Kamera haben mehrere Megabyte, fürs Web genügen rund 2200
+ * Pixel Breite.
  */
+
+const MAX_BREITE = 2200
+const MAX_BYTES = 1_200_000
 
 function alsFliesstext(absaetze: string[]) {
   return {
@@ -43,88 +54,117 @@ function alsFliesstext(absaetze: string[]) {
   }
 }
 
-async function main() {
-  const ordner = process.argv[2]
-  const teamName = process.argv[3] && !process.argv[3].startsWith('--') ? process.argv[3] : undefined
+/** Ordnername auf ein Team abbilden: aus «u12» wird die U12. */
+function passendesTeam<T extends { name: string }>(ordnername: string, teams: T[]): T | undefined {
+  const sauber = (t: string) => t.toLowerCase().replace(/[\s._-]/g, '')
+  const gesucht = sauber(ordnername)
+  return (
+    teams.find((t) => sauber(t.name) === gesucht) ??
+    teams.find((t) => sauber(t.name).includes(gesucht) || gesucht.includes(sauber(t.name)))
+  )
+}
 
-  const beitragIndex = process.argv.indexOf('--beitrag')
-  const beitragTitel = beitragIndex > -1 ? process.argv[beitragIndex + 1] : undefined
+/**
+ * Rechnet ein Bild herunter, falls nötig, und gibt den Pfad zur Fassung
+ * zurück, die hochgeladen werden soll.
+ */
+async function fuersWeb(dateipfad: string, ablage: string): Promise<string> {
+  const groesse = fs.statSync(dateipfad).size
+  const info = await sharp(dateipfad).metadata()
 
-  if (!ordner || !fs.existsSync(ordner)) {
-    console.error('Ordner mit den aufbereiteten Fotos angeben.')
-    process.exit(1)
-  }
+  if (groesse <= MAX_BYTES && (info.width ?? 0) <= MAX_BREITE) return dateipfad
 
-  const erneuern = process.argv.includes('--erneuern')
-  const payload = await getPayload({ config: await configPromise })
+  const ziel = path.join(ablage, path.basename(dateipfad).replace(/\.[^.]+$/, '.jpg').toLowerCase())
+  await sharp(dateipfad)
+    .rotate() // EXIF-Ausrichtung anwenden, sonst liegen Hochformate quer
+    .resize({ width: MAX_BREITE, withoutEnlargement: true })
+    .jpeg({ quality: 82, mozjpeg: true })
+    .toFile(ziel)
+  return ziel
+}
 
-  const imBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN)
-  console.log(`\nSpeicher: ${imBlob ? 'Vercel Blob (live sichtbar)' : 'lokaler Ordner /media'}`)
-  if (!imBlob) {
-    console.log('Hinweis: Ohne BLOB_READ_WRITE_TOKEN sind die Bilder auf Vercel nicht sichtbar.')
-  }
+type Optionen = { erneuern: boolean; beitragTitel?: string }
 
+/** Importiert einen Ordner und verknüpft ihn mit einem Team. */
+async function importiereOrdner(
+  payload: Payload,
+  ordner: string,
+  teamName: string | undefined,
+  optionen: Optionen,
+): Promise<number> {
   const dateien = fs
     .readdirSync(ordner)
-    .filter((d) => /\.(jpe?g|png|webp)$/i.test(d))
+    .filter((d) => /\.(jpe?g|png|webp|heic)$/i.test(d))
     .sort()
 
-  console.log(`\n${dateien.length} Bilder werden geladen …\n`)
-
-  const angelegt: number[] = []
-  let uebersprungen = 0
-
-  for (const [index, datei] of dateien.entries()) {
-    const dateipfad = path.join(ordner, datei)
-
-    // Schon vorhanden? Dann nicht doppelt anlegen.
-    const { docs } = await payload.find({
-      collection: 'media',
-      where: { filename: { equals: datei } },
-      limit: 1,
-    })
-    if (docs[0] && !erneuern) {
-      angelegt.push(docs[0].id as number)
-      uebersprungen++
-      continue
-    }
-    if (docs[0]) {
-      // Mit «--erneuern» wandert die Datei in den inzwischen eingerichteten
-      // Blob-Speicher, ohne dass Verknüpfungen verloren gehen.
-      const aktualisiert = await payload.update({
-        collection: 'media',
-        id: docs[0].id,
-        data: {},
-        filePath: dateipfad,
-      })
-      angelegt.push(aktualisiert.id as number)
-      console.log(`  ${String(index + 1).padStart(2)}/${dateien.length}  ${datei}  erneuert`)
-      continue
-    }
-
-    try {
-      const bild = await payload.create({
-        collection: 'media',
-        data: {
-          alt: teamName
-            ? `${teamName} des EHC Rot-Blau Bern-Bümpliz auf dem Eis`
-            : 'EHC Rot-Blau Bern-Bümpliz',
-        },
-        filePath: dateipfad,
-      })
-      angelegt.push(bild.id as number)
-      console.log(
-        `  ${String(index + 1).padStart(2)}/${dateien.length}  ${datei}  ${bild.width}×${bild.height}`,
-      )
-    } catch (fehler) {
-      console.log(`  ${datei}: fehlgeschlagen – ${(fehler as Error).message.slice(0, 80)}`)
-    }
+  if (dateien.length === 0) {
+    console.log(`  ${path.basename(ordner)}: keine Bilder`)
+    return 0
   }
 
-  if (uebersprungen > 0) console.log(`  (${uebersprungen} bereits vorhanden)`)
-  console.log(`\n${angelegt.length} Bilder in der Mediathek.`)
+  const ablage = fs.mkdtempSync(path.join(os.tmpdir(), 'rbb-web-'))
+  const angelegt: number[] = []
+  let neu = 0
+  let vorhanden = 0
+  let verkleinert = 0
 
-  // Teamfoto setzen
+  try {
+    for (const datei of dateien) {
+      const quelle = path.join(ordner, datei)
+      const name = datei.replace(/\.[^.]+$/, '.jpg').toLowerCase()
+
+      const { docs } = await payload.find({
+        collection: 'media',
+        where: { filename: { equals: name } },
+        limit: 1,
+      })
+
+      if (docs[0] && !optionen.erneuern) {
+        angelegt.push(docs[0].id as number)
+        vorhanden++
+        continue
+      }
+
+      try {
+        const hochzuladen = await fuersWeb(quelle, ablage)
+        if (hochzuladen !== quelle) verkleinert++
+
+        if (docs[0]) {
+          const aktualisiert = await payload.update({
+            collection: 'media',
+            id: docs[0].id,
+            data: {},
+            filePath: hochzuladen,
+          })
+          angelegt.push(aktualisiert.id as number)
+        } else {
+          const bild = await payload.create({
+            collection: 'media',
+            data: {
+              alt: teamName
+                ? `${teamName} des EHC Rot-Blau Bern-Bümpliz`
+                : 'EHC Rot-Blau Bern-Bümpliz',
+            },
+            filePath: hochzuladen,
+          })
+          angelegt.push(bild.id as number)
+          neu++
+        }
+      } catch (fehler) {
+        console.log(`    ${datei}: fehlgeschlagen – ${(fehler as Error).message.slice(0, 70)}`)
+      }
+    }
+  } finally {
+    fs.rmSync(ablage, { recursive: true, force: true })
+  }
+
+  console.log(
+    `  ${(teamName ?? path.basename(ordner)).padEnd(14)} ${String(angelegt.length).padStart(3)} Bilder` +
+      ` (${neu} neu, ${vorhanden} bereits vorhanden` +
+      `${verkleinert > 0 ? `, ${verkleinert} verkleinert` : ''})`,
+  )
+
+  // Teamfoto setzen, falls noch keines hinterlegt ist.
   if (teamName && angelegt.length > 0) {
     const { docs } = await payload.find({
       collection: 'teams',
@@ -132,30 +172,26 @@ async function main() {
       limit: 1,
     })
     const team = docs[0]
-    if (!team) {
-      console.log(`Team «${teamName}» nicht gefunden – kein Teamfoto gesetzt.`)
-    } else if (team.teamfoto) {
-      console.log(`Team «${teamName}» hat bereits ein Teamfoto – unverändert.`)
-    } else {
+    if (team && !team.teamfoto) {
       await payload.update({
         collection: 'teams',
         id: team.id,
         data: { teamfoto: angelegt[0] } as never,
       })
-      console.log(`Teamfoto für «${teamName}» gesetzt.`)
+      console.log(`                 Teamfoto gesetzt`)
     }
   }
 
-  // Beitrag mit Galerie
-  if (beitragTitel && angelegt.length > 0) {
+  // Beitrag mit Bildergalerie.
+  if (optionen.beitragTitel && angelegt.length > 0) {
     const { docs } = await payload.find({
       collection: 'posts',
-      where: { titel: { equals: beitragTitel } },
+      where: { titel: { equals: optionen.beitragTitel } },
       limit: 1,
     })
 
     const daten = {
-      titel: beitragTitel,
+      titel: optionen.beitragTitel,
       auszug: `Bilder ${teamName ? `der ${teamName} ` : ''}vom Eis in Bern-Bümpliz.`,
       inhalt: alsFliesstext([
         `Eindrücke ${teamName ? `unserer ${teamName} ` : ''}von der Kunsteisbahn Weyermannshaus.`,
@@ -169,14 +205,58 @@ async function main() {
 
     if (docs[0]) {
       await payload.update({ collection: 'posts', id: docs[0].id, data: daten as never })
-      console.log(`Beitrag «${beitragTitel}» aktualisiert (${daten.galerie.length} Bilder).`)
     } else {
       await payload.create({ collection: 'posts', data: daten as never })
-      console.log(`Beitrag «${beitragTitel}» angelegt (${daten.galerie.length} Bilder).`)
     }
+    console.log(`                 Beitrag «${optionen.beitragTitel}» mit ${daten.galerie.length} Bildern`)
   }
 
-  console.log('')
+  return angelegt.length
+}
+
+async function main() {
+  const ordner = process.argv[2]
+  const teamName = process.argv[3] && !process.argv[3].startsWith('--') ? process.argv[3] : undefined
+
+  const beitragIndex = process.argv.indexOf('--beitrag')
+  const optionen: Optionen = {
+    erneuern: process.argv.includes('--erneuern'),
+    beitragTitel: beitragIndex > -1 ? process.argv[beitragIndex + 1] : undefined,
+  }
+
+  if (!ordner || !fs.existsSync(ordner)) {
+    console.error('Ordner mit den Fotos angeben.')
+    process.exit(1)
+  }
+
+  const payload = await getPayload({ config: await configPromise })
+
+  console.log(
+    `\nSpeicher: ${
+      process.env.BLOB_READ_WRITE_TOKEN ? 'Vercel Blob (live sichtbar)' : 'lokaler Ordner /media'
+    }\n`,
+  )
+
+  if (process.argv.includes('--pro-ordner')) {
+    const { docs: teams } = await payload.find({ collection: 'teams', limit: 100, depth: 0 })
+    const unterordner = fs
+      .readdirSync(ordner, { withFileTypes: true })
+      .filter((e) => e.isDirectory())
+      .map((e) => e.name)
+      .sort()
+
+    let gesamt = 0
+    for (const name of unterordner) {
+      const team = passendesTeam(name, teams as { name: string }[])
+      if (!team) console.log(`  ${name}: kein passendes Team – Bilder werden nur abgelegt`)
+      gesamt += await importiereOrdner(payload, path.join(ordner, name), team?.name, optionen)
+    }
+    console.log(`\n${gesamt} Bilder aus ${unterordner.length} Ordnern.\n`)
+  } else {
+    await importiereOrdner(payload, ordner, teamName, optionen)
+    console.log('')
+  }
+
   process.exit(0)
 }
 
