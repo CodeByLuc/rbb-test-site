@@ -152,7 +152,7 @@ export function SoGehtLos({
           <ol className="mt-8 space-y-5">
             {schritte.map((schritt) => (
               <li key={schritt.nummer} className="flex gap-4">
-                <span className="flex h-11 w-11 shrink-0 items-center justify-center bg-rot font-display text-2xl leading-none">
+                <span className="knopf flex h-11 w-11 shrink-0 items-center justify-center bg-rot font-display text-2xl leading-none">
                   {schritt.nummer}
                 </span>
                 <div>

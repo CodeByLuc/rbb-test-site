@@ -100,7 +100,7 @@ export function Header({ logoUrl, teams }: HeaderProps) {
         <button
           type="button"
           onClick={() => setMenuOffen((offen) => !offen)}
-          className="my-2 flex items-center gap-2 bg-rot px-4 font-display text-base tracking-wider uppercase lg:hidden"
+          className="knopf my-2.5 flex items-center gap-2 bg-rot px-4 font-display text-base tracking-wider uppercase transition-colors hover:bg-rot-dunkel lg:hidden"
           aria-expanded={menuOffen}
           aria-controls="mobiles-menu"
         >
