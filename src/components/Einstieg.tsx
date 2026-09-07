@@ -186,6 +186,15 @@ export function SoGehtLos({
             Kunsteisbahn Weyermannshaus
             <span className="block text-white/50">Bern-Bümpliz</span>
           </p>
+          <a
+            href="https://www.google.com/maps/search/?api=1&query=Kunsteisbahn+Weyermannshaus+Bern"
+            target="_blank"
+            rel="noopener noreferrer"
+            className="mt-2 inline-flex items-center gap-1.5 font-display text-sm tracking-wide text-rot uppercase hover:text-white"
+          >
+            Auf der Karte ansehen
+            <span aria-hidden="true">↗</span>
+          </a>
 
           {zeiten.length > 0 && (
             <>
