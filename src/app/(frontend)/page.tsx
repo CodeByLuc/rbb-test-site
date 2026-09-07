@@ -147,7 +147,12 @@ export default async function Startseite() {
         <div className="absolute inset-0 bg-gradient-to-r from-nacht-tief via-nacht-tief/90 to-nacht-tief/40" />
         <div className="eisglanz absolute inset-0 opacity-70" />
 
-        <div className="inhalt relative grid gap-8 py-12 sm:py-16 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-12">
+        <div
+          className={`inhalt relative grid gap-8 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-12 ${
+            // Ohne Hintergrundfoto wirkt viel Höhe wie eine leere Fläche.
+            hero ? 'py-12 sm:py-16' : 'py-9 sm:py-12'
+          }`}
+        >
           <Logo logo={einstellungen.logo} className="h-28 w-auto drop-shadow-2xl sm:h-40 lg:h-52" />
 
           <div>
@@ -257,8 +262,8 @@ export default async function Startseite() {
         </section>
       )}
 
-      {/* Foto-Band mit Slogan über die ganze Breite */}
-      {bandFoto && (
+      {/* Foto-Band mit Slogan – nur sinnvoll, wenn es ein Foto dafür gibt. */}
+      {bildDaten(bandFoto, 'hero') && (
         <section className="relative isolate flex min-h-80 items-center overflow-hidden bg-nacht text-white sm:min-h-96">
           <Bild
             bild={bandFoto}

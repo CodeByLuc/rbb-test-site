@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 import type { Einstellungen, Team } from '../payload-types'
-import { Bild } from './Bild'
+import { Bild, bildDaten } from './Bild'
 
 /**
  * Bausteine für Besucherinnen und Besucher, die den Verein noch nicht kennen.
@@ -57,20 +57,32 @@ export function TeamFinder({ teams }: { teams: Team[] }) {
       <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
         {sortiert.map((team) => {
           const alter = altersangabe(team)
+          const foto = bildDaten(team.teamfoto, 'card')
+          // Ohne Foto bliebe sonst eine grosse leere Fläche stehen – dann wird
+          // die Kachel flach und lebt von Schrift und Farbe.
+          const hoehe = foto ? 'min-h-44 sm:min-h-52' : ''
+          const ligaZeigen =
+            team.liga && team.liga.trim().toLowerCase() !== team.name.trim().toLowerCase()
+
           return (
             <Link
               key={team.id}
               href={`/teams/${team.slug}`}
-              className="group relative isolate flex min-h-44 flex-col justify-end overflow-hidden bg-nacht text-white shadow-md transition-shadow hover:shadow-2xl sm:min-h-52"
+              className={`group relative isolate flex flex-col justify-end overflow-hidden bg-nacht text-white shadow-md transition-shadow hover:shadow-2xl ${hoehe}`}
             >
-              <Bild
-                bild={team.teamfoto}
-                groesse="card"
-                className="absolute inset-0 h-full w-full object-cover opacity-55 transition-all duration-300 group-hover:scale-105 group-hover:opacity-70"
-                sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20rem"
-                ersatz={<div className="eisglanz absolute inset-0 bg-blau-dunkel" />}
-              />
-              <div className="absolute inset-0 bg-gradient-to-t from-nacht-tief via-nacht-tief/55 to-transparent" />
+              {foto ? (
+                <>
+                  <Bild
+                    bild={team.teamfoto}
+                    groesse="card"
+                    className="absolute inset-0 h-full w-full object-cover opacity-55 transition-all duration-300 group-hover:scale-105 group-hover:opacity-70"
+                    sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20rem"
+                  />
+                  <div className="absolute inset-0 bg-gradient-to-t from-nacht-tief via-nacht-tief/55 to-transparent" />
+                </>
+              ) : (
+                <div className="eisglanz absolute inset-0 opacity-70" />
+              )}
 
               <div className="relative p-4">
                 {alter && (
@@ -81,10 +93,7 @@ export function TeamFinder({ teams }: { teams: Team[] }) {
                 <span className="block font-display text-xl leading-[0.95] tracking-wide uppercase sm:text-2xl">
                   {team.name}
                 </span>
-                {/* Bei den Junioren heisst die Liga gleich wie das Team – dann weglassen. */}
-                {team.liga && team.liga.trim().toLowerCase() !== team.name.trim().toLowerCase() && (
-                  <span className="mt-1 block text-xs text-white/60">{team.liga}</span>
-                )}
+                {ligaZeigen && <span className="mt-1 block text-xs text-white/60">{team.liga}</span>}
               </div>
 
               <span className="absolute right-0 bottom-0 h-1 w-full origin-left scale-x-0 bg-rot transition-transform duration-300 group-hover:scale-x-100" />
