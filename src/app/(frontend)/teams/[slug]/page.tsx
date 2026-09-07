@@ -2,13 +2,14 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Bild } from '../../../../components/Bild'
+import { Bild, bildDaten } from '../../../../components/Bild'
 import { Fliesstext } from '../../../../components/Fliesstext'
 import { PostKarte } from '../../../../components/PostKarte'
 import { Seitenkopf } from '../../../../components/Seitenkopf'
 import { LetztesResultat, NaechstesSpiel, SpielListe } from '../../../../components/Spiele'
 import { Tabelle } from '../../../../components/Tabelle'
-import { holePosts, holeTeam, holeTeams } from '../../../../lib/daten'
+import { TeamKompakt } from '../../../../components/TeamKompakt'
+import { holePosts, holeTeam, holeTeamBilder, holeTeams } from '../../../../lib/daten'
 import { holeTeamSpielplan, saisonAlias } from '../../../../lib/sihf'
 
 export const revalidate = 3600
@@ -43,13 +44,14 @@ export default async function TeamSeite({ params }: Props) {
   const team = await holeTeam(slug)
   if (!team) notFound()
 
-  const [plan, posts] = await Promise.all([
+  const [plan, posts, teamBilder] = await Promise.all([
     holeTeamSpielplan({
       ligaId: team.sihfLeagueId,
       teamId: team.sihfTeamId,
       teamName: team.sihfTeamName,
     }),
     holePosts({ limit: 3, teamId: team.id }),
+    holeTeamBilder(team.name),
   ])
 
   // In der Sommerpause hat die neue Saison noch keine Spiele – dann zeigen wir die letzte.
@@ -70,13 +72,17 @@ export default async function TeamSeite({ params }: Props) {
   const spieler = team.spieler ?? []
   const trainer = team.trainer ?? []
   const trainings = team.trainingszeiten ?? []
+  const teamfoto = bildDaten(team.teamfoto, 'hero')
+
+  // Das Teamfoto steht schon oben gross – in der Galerie waere es doppelt.
+  const teamfotoId = typeof team.teamfoto === 'object' ? team.teamfoto?.id : team.teamfoto
+  const portraets = teamBilder.filter((bild) => bild.id !== teamfotoId)
 
   return (
     <>
       <Seitenkopf
         titel={team.name}
         untertitel={team.kurzbeschreibung}
-        hintergrundbild={team.teamfoto}
         zusatz={
           <div className="flex flex-wrap items-center gap-3 text-sm">
             {team.liga && (
@@ -97,53 +103,57 @@ export default async function TeamSeite({ params }: Props) {
         }
       />
 
-      <div className="inhalt grid gap-10 py-14 lg:grid-cols-[2fr_1fr]">
-        <div className="space-y-10">
-          {/* Nächste Partie und letztes Resultat als Blickfang */}
-          {(anzeige?.naechste[0] || anzeige?.letztes) && (
-            <div className="grid gap-5 xl:grid-cols-2">
-              {anzeige?.naechste[0] && (
+      {/*
+        Aufbau nach der Skizze: oben das Teamfoto gross, daneben die beiden
+        Partien. Darunter links der Kader, rechts die Tabelle.
+      */}
+      <div className="inhalt grid gap-6 pt-8 lg:grid-cols-[2fr_1fr] lg:gap-8">
+        {teamfoto && (
+          <div className="kachel relative overflow-hidden bg-nacht shadow-xl">
+            <Bild
+              bild={team.teamfoto}
+              groesse="hero"
+              priority
+              className="aspect-16/9 w-full object-cover"
+              sizes="(max-width: 1024px) 100vw, 60vw"
+            />
+          </div>
+        )}
+
+        {/* Letztes und nächstes Spiel – auf dem Telefon als Kurzübersicht. */}
+        {anzeige && (anzeige.naechste[0] || anzeige.letztes || anzeige.tabelle.length > 0) && (
+          <>
+            <TeamKompakt
+              tabelle={anzeige.tabelle}
+              letztes={anzeige.letztes}
+              naechstes={anzeige.naechste[0]}
+              eigenerName={eigenerName}
+              liga={team.liga}
+              tabellenUrl={team.tabellenUrl}
+              className="lg:hidden"
+            />
+
+            <div className="hidden gap-5 lg:grid lg:content-start">
+              {anzeige.naechste[0] && (
                 <NaechstesSpiel spiel={anzeige.naechste[0]} eigenerName={eigenerName} />
               )}
-              {anzeige?.letztes && (
+              {anzeige.letztes && (
                 <LetztesResultat spiel={anzeige.letztes} eigenerName={eigenerName} />
               )}
             </div>
-          )}
+          </>
+        )}
+      </div>
 
+      <div className="inhalt grid gap-10 py-10 lg:grid-cols-[2fr_1fr]">
+        <div className="space-y-10">
           {team.beschreibung && (
             <div className="kachel bg-white p-6 shadow-sm sm:p-8">
               <Fliesstext daten={team.beschreibung} />
             </div>
           )}
 
-          {/* Spielplan direkt von Swiss Ice Hockey */}
-          {team.sihfLeagueId ? (
-            <div className="space-y-4">
-              {istVorsaison && (
-                <p className="kachel border-l-4 border-rot bg-white px-4 py-3 text-sm text-nacht shadow-sm">
-                  Für die neue Saison sind noch keine Spiele angesetzt. Unten stehen Tabelle und
-                  Spielplan der letzten Saison.
-                </p>
-              )}
-
-              {anzeige && anzeige.tabelle.length > 0 && (
-                <Tabelle
-                  zeilen={anzeige.tabelle}
-                  eigenerName={eigenerName}
-                  titel={`Tabelle${team.liga ? ` – ${team.liga}` : ''}`}
-                  tabellenUrl={team.tabellenUrl}
-                />
-              )}
-
-              <SpielListe
-                titel={istVorsaison ? 'Spiele der letzten Saison' : 'Spielplan und Resultate'}
-                spiele={anzeige?.spiele ?? []}
-                eigenerName={eigenerName}
-                leerText="Die Spiele erscheinen hier, sobald Swiss Ice Hockey den Spielplan veröffentlicht."
-              />
-            </div>
-          ) : (
+          {!team.sihfLeagueId && (
             <p className="kachel bg-white p-6 text-sm text-grau shadow-sm">
               Dieses Team spielt keine offizielle Meisterschaft. Trainingszeiten und Termine stehen
               rechts.
@@ -180,7 +190,31 @@ export default async function TeamSeite({ params }: Props) {
             </section>
           )}
 
+          {/*
+            Porträts aus der Mediathek. Welches Bild welche Person zeigt, geht
+            aus den Kameradateinamen nicht hervor – darum stehen sie als
+            Galerie und nicht mit Namen beim Kader.
+          */}
+          {portraets.length > 0 && (
+            <section>
+              <h2 className="abschnittstitel mb-5 text-4xl text-nacht">Porträts</h2>
+              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
+                {portraets.map((bild) => (
+                  <div key={bild.id} className="kachel overflow-hidden bg-nacht shadow-sm">
+                    <Bild
+                      bild={bild}
+                      groesse="portrait"
+                      className="aspect-[3/4] w-full object-cover"
+                      sizes="(max-width: 640px) 33vw, 12rem"
+                    />
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {posts.length > 0 && (
+
             <section>
               <h2 className="abschnittstitel mb-5 text-4xl text-nacht">News zu diesem Team</h2>
               <div className="grid gap-6 sm:grid-cols-2">
@@ -192,7 +226,39 @@ export default async function TeamSeite({ params }: Props) {
           )}
         </div>
 
-        <aside className="space-y-6 lg:sticky lg:top-32 lg:self-start">
+        <aside className="space-y-6">
+          {/*
+            Tabelle und Spielplan brauchen Breite. Auf dem Telefon steht oben
+            die Kurzübersicht, hier erscheinen sie erst, wenn sie auch lesbar
+            sind – sonst scrollt man nur an Zahlenkolonnen vorbei.
+          */}
+          {team.sihfLeagueId && anzeige && (
+            <div className="hidden space-y-4 lg:block">
+              {istVorsaison && (
+                <p className="kachel border-l-4 border-rot bg-white px-4 py-3 text-sm text-nacht shadow-sm">
+                  Für die neue Saison sind noch keine Spiele angesetzt. Es folgen Tabelle und
+                  Spielplan der letzten Saison.
+                </p>
+              )}
+
+              {anzeige.tabelle.length > 0 && (
+                <Tabelle
+                  zeilen={anzeige.tabelle}
+                  eigenerName={eigenerName}
+                  titel={`Tabelle${team.liga ? ` – ${team.liga}` : ''}`}
+                  tabellenUrl={team.tabellenUrl}
+                />
+              )}
+
+              <SpielListe
+                titel={istVorsaison ? 'Spiele der letzten Saison' : 'Spielplan und Resultate'}
+                spiele={anzeige.spiele}
+                eigenerName={eigenerName}
+                leerText="Die Spiele erscheinen hier, sobald Swiss Ice Hockey den Spielplan veröffentlicht."
+              />
+            </div>
+          )}
+
           {trainings.length > 0 && (
             <div className="kachel bg-nacht text-white shadow-xl">
               <h2 className="bg-nacht-tief px-5 py-3 text-xl">Trainingszeiten</h2>
