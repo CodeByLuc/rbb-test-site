@@ -29,7 +29,7 @@ export function Header({ logoUrl, teams }: HeaderProps) {
   const schliessen = () => setMenuOffen(false)
 
   return (
-    <header className="sticky top-0 z-50 bg-nacht text-white shadow-lg shadow-nacht/20">
+    <header className="kachel sticky top-0 z-50 bg-nacht text-white shadow-lg shadow-nacht/20">
       <div className="inhalt flex items-stretch justify-between gap-4">
         {/* Das Wappen trägt den Vereinsnamen bereits – daneben keine Wiederholung. */}
         <Link
@@ -75,7 +75,7 @@ export function Header({ logoUrl, teams }: HeaderProps) {
                 </Link>
 
                 {eintrag.pfad === '/teams' && teams.length > 0 && (
-                  <div className="invisible absolute top-full left-0 w-72 translate-y-1 border-t-4 border-rot bg-nacht-tief opacity-0 shadow-2xl transition-all group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                  <div className="kachel invisible absolute top-full left-0 w-72 translate-y-1 border-t-4 border-rot bg-nacht-tief opacity-0 shadow-2xl transition-all group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                     {teams.map((team) => (
                       <Link
                         key={team.slug}

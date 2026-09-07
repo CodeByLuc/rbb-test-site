@@ -68,7 +68,7 @@ export function TeamFinder({ teams }: { teams: Team[] }) {
             <Link
               key={team.id}
               href={`/teams/${team.slug}`}
-              className={`group relative isolate flex flex-col justify-end overflow-hidden bg-nacht text-white shadow-md transition-shadow hover:shadow-2xl ${hoehe}`}
+              className={`kachel group relative isolate flex flex-col justify-end overflow-hidden bg-nacht text-white shadow-md transition-shadow hover:shadow-2xl ${hoehe}`}
             >
               {foto ? (
                 <>
@@ -166,13 +166,13 @@ export function SoGehtLos({
           <div className="mt-9 flex flex-wrap gap-3">
             <a
               href={`mailto:${email}?subject=Schnuppertraining`}
-              className="bg-rot px-7 py-3.5 font-display text-lg tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
+              className="knopf bg-rot px-7 py-3.5 font-display text-lg tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
             >
               Schnuppertraining anfragen
             </a>
             <Link
               href="/verein"
-              className="border-2 border-white/40 px-7 py-3.5 font-display text-lg tracking-wide uppercase transition-colors hover:border-white hover:bg-white hover:text-nacht"
+              className="knopf border-2 border-white/40 px-7 py-3.5 font-display text-lg tracking-wide uppercase transition-colors hover:border-white hover:bg-white hover:text-nacht"
             >
               Mitglied werden
             </Link>

@@ -39,7 +39,7 @@ export default async function SponsorenSeite() {
         </div>
 
         <aside className="lg:sticky lg:top-28 lg:self-start">
-          <div className="bg-white p-6 shadow-sm">
+          <div className="kachel bg-white p-6 shadow-sm">
             <h2 className="abschnittstitel mb-4 text-3xl text-nacht">Sponsor werden</h2>
 
             {einstellungen.sponsoringText ? (
@@ -58,7 +58,7 @@ export default async function SponsorenSeite() {
                   href={blatt.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="block bg-rot px-5 py-3 text-center font-display text-sm tracking-wide text-white uppercase hover:bg-rot-dunkel"
+                  className="knopf block bg-rot px-5 py-3 text-center font-display text-sm tracking-wide text-white uppercase hover:bg-rot-dunkel"
                 >
                   {blatt.titel ?? 'Sponsoring-Unterlagen'} herunterladen
                 </a>
@@ -67,7 +67,7 @@ export default async function SponsorenSeite() {
               {einstellungen.email && (
                 <a
                   href={`mailto:${einstellungen.email}?subject=Sponsoring%20EHC%20Rot-Blau`}
-                  className="block border-2 border-blau px-5 py-3 text-center font-display text-sm tracking-wide text-nacht uppercase hover:bg-blau hover:text-white"
+                  className="knopf block border-2 border-blau px-5 py-3 text-center font-display text-sm tracking-wide text-nacht uppercase hover:bg-blau hover:text-white"
                 >
                   Anfrage per E-Mail
                 </a>

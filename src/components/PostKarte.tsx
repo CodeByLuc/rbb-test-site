@@ -21,12 +21,12 @@ export function PostKarte({ post, gross = false }: { post: Post; gross?: boolean
   const etiketten = (
     <>
       {post.typ === 'resultate' && (
-        <span className="bg-rot px-2.5 py-1 font-display text-xs tracking-[0.18em] text-white uppercase">
+        <span className="etikett bg-rot px-2.5 py-1 font-display text-xs tracking-[0.18em] text-white uppercase">
           Resultate
         </span>
       )}
       {teamName && (
-        <span className="bg-blau px-2.5 py-1 font-display text-xs tracking-[0.18em] text-white uppercase">
+        <span className="etikett bg-blau px-2.5 py-1 font-display text-xs tracking-[0.18em] text-white uppercase">
           {teamName}
         </span>
       )}
@@ -35,7 +35,7 @@ export function PostKarte({ post, gross = false }: { post: Post; gross?: boolean
 
   return (
     <article
-      className={`group relative flex flex-col overflow-hidden bg-white shadow-md transition-shadow hover:shadow-2xl ${
+      className={`kachel group relative flex flex-col overflow-hidden bg-white shadow-md transition-shadow hover:shadow-2xl ${
         gross ? 'sm:col-span-2' : ''
       }`}
     >

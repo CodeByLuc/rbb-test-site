@@ -80,7 +80,7 @@ export default async function TeamSeite({ params }: Props) {
         zusatz={
           <div className="flex flex-wrap items-center gap-3 text-sm">
             {team.liga && (
-              <span className="bg-white/15 px-3 py-1 font-display tracking-wide uppercase">
+              <span className="knopf bg-white/15 px-3 py-1 font-display tracking-wide uppercase">
                 {team.liga}
               </span>
             )}
@@ -112,7 +112,7 @@ export default async function TeamSeite({ params }: Props) {
           )}
 
           {team.beschreibung && (
-            <div className="bg-white p-6 shadow-sm sm:p-8">
+            <div className="kachel bg-white p-6 shadow-sm sm:p-8">
               <Fliesstext daten={team.beschreibung} />
             </div>
           )}
@@ -121,7 +121,7 @@ export default async function TeamSeite({ params }: Props) {
           {team.sihfLeagueId ? (
             <div className="space-y-4">
               {istVorsaison && (
-                <p className="border-l-4 border-rot bg-white px-4 py-3 text-sm text-nacht shadow-sm">
+                <p className="kachel border-l-4 border-rot bg-white px-4 py-3 text-sm text-nacht shadow-sm">
                   Für die neue Saison sind noch keine Spiele angesetzt. Unten stehen Tabelle und
                   Spielplan der letzten Saison.
                 </p>
@@ -144,7 +144,7 @@ export default async function TeamSeite({ params }: Props) {
               />
             </div>
           ) : (
-            <p className="bg-white p-6 text-sm text-grau shadow-sm">
+            <p className="kachel bg-white p-6 text-sm text-grau shadow-sm">
               Dieses Team spielt keine offizielle Meisterschaft. Trainingszeiten und Termine stehen
               rechts.
             </p>
@@ -156,7 +156,7 @@ export default async function TeamSeite({ params }: Props) {
               <h2 className="abschnittstitel mb-5 text-4xl text-nacht">Kader</h2>
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {spieler.map((person, index) => (
-                  <div key={person.id ?? index} className="overflow-hidden bg-white shadow-sm">
+                  <div key={person.id ?? index} className="kachel overflow-hidden bg-white shadow-sm">
                     <Bild
                       bild={person.foto}
                       groesse="portrait"
@@ -194,7 +194,7 @@ export default async function TeamSeite({ params }: Props) {
 
         <aside className="space-y-6 lg:sticky lg:top-32 lg:self-start">
           {trainings.length > 0 && (
-            <div className="bg-nacht text-white shadow-xl">
+            <div className="kachel bg-nacht text-white shadow-xl">
               <h2 className="bg-nacht-tief px-5 py-3 text-xl">Trainingszeiten</h2>
               <div className="trikotband-schmal" />
               <ul className="p-5 text-sm">
@@ -213,7 +213,7 @@ export default async function TeamSeite({ params }: Props) {
           )}
 
           {trainer.length > 0 && (
-            <div className="bg-white shadow-md">
+            <div className="kachel bg-white shadow-md">
               <h2 className="abschnittstitel px-5 pt-5 text-2xl text-nacht">Trainer & Betreuung</h2>
               <ul className="space-y-4 p-5">
                 {trainer.map((person, index) => (

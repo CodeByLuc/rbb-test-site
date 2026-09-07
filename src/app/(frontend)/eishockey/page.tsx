@@ -27,7 +27,7 @@ export default async function EishockeySeite() {
       <div className="inhalt grid gap-10 py-14 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-8">
           {inhalt.regeln && (
-            <section className="bg-white p-6 shadow-sm sm:p-8">
+            <section className="kachel bg-white p-6 shadow-sm sm:p-8">
               <h2 className="abschnittstitel mb-4 text-4xl text-nacht sm:text-6xl">
                 Die Regeln in Kürze
               </h2>
@@ -37,7 +37,7 @@ export default async function EishockeySeite() {
                   href={inhalt.regelwerkLink}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="mt-6 inline-flex items-center gap-2 bg-blau px-5 py-3 font-display text-sm tracking-wide text-white uppercase hover:bg-blau-dunkel"
+                  className="knopf mt-6 inline-flex items-center gap-2 bg-blau px-5 py-3 font-display text-sm tracking-wide text-white uppercase hover:bg-blau-dunkel"
                 >
                   Offizielles Regelbuch
                   <span aria-hidden="true">↗</span>
@@ -55,7 +55,7 @@ export default async function EishockeySeite() {
                 {angebote.map((angebot, index) => (
                   <article
                     key={angebot.id ?? index}
-                    className="flex flex-col overflow-hidden bg-white shadow-sm"
+                    className="kachel flex flex-col overflow-hidden bg-white shadow-sm"
                   >
                     {angebot.bild && (
                       <Bild
@@ -100,14 +100,14 @@ export default async function EishockeySeite() {
           )}
 
           {!inhalt.regeln && angebote.length === 0 && (
-            <p className="bg-white p-8 text-grau shadow-sm">
+            <p className="kachel bg-white p-8 text-grau shadow-sm">
               Die Inhalte dieser Seite werden im Redaktionsbereich unter «Seite Eishockey» erfasst.
             </p>
           )}
         </div>
 
         <aside className="lg:sticky lg:top-28 lg:self-start">
-          <div className="bg-blau p-6 text-white shadow-sm">
+          <div className="kachel bg-blau p-6 text-white shadow-sm">
             <h2 className="mb-3 text-xl">Neu beim Eishockey?</h2>
             <p className="text-sm text-white/85">
               Bei uns starten Kinder und Erwachsene ohne Vorkenntnisse. Schlittschuhe und Stock
@@ -115,7 +115,7 @@ export default async function EishockeySeite() {
             </p>
             <a
               href="/verein"
-              className="mt-5 inline-block bg-rot px-5 py-2.5 font-display text-sm tracking-wide uppercase hover:bg-rot-dunkel"
+              className="knopf mt-5 inline-block bg-rot px-5 py-2.5 font-display text-sm tracking-wide uppercase hover:bg-rot-dunkel"
             >
               Schnuppertraining
             </a>

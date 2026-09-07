@@ -174,13 +174,13 @@ export default async function Startseite() {
             <div className="mt-8 flex flex-wrap gap-3">
               <a
                 href="#einstieg"
-                className="bg-rot px-7 py-3.5 font-display text-xl tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
+                className="knopf bg-rot px-7 py-3.5 font-display text-xl tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
               >
                 Eishockey ausprobieren
               </a>
               <Link
                 href="/teams"
-                className="border-2 border-white/45 px-7 py-3.5 font-display text-xl tracking-wide uppercase transition-colors hover:border-white hover:bg-white hover:text-nacht"
+                className="knopf border-2 border-white/45 px-7 py-3.5 font-display text-xl tracking-wide uppercase transition-colors hover:border-white hover:bg-white hover:text-nacht"
               >
                 Teams und Spielplan
               </Link>
@@ -237,8 +237,8 @@ export default async function Startseite() {
                 teamName={naechste.team.name}
               />
             ) : (
-              <div className="eisglanz flex flex-col justify-center bg-blau px-8 py-10 text-white shadow-2xl">
-                <span className="mb-3 w-fit bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
+              <div className="kachel eisglanz flex flex-col justify-center bg-blau px-8 py-10 text-white shadow-2xl">
+                <span className="etikett mb-3 w-fit bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
                   Nächstes Spiel
                 </span>
                 <p className="font-display text-3xl leading-[0.9] uppercase sm:text-4xl">
@@ -300,7 +300,7 @@ export default async function Startseite() {
             </div>
 
             {posts.length === 0 ? (
-              <p className="bg-white p-8 text-grau shadow-sm">
+              <p className="kachel bg-white p-8 text-grau shadow-sm">
                 Noch keine Beiträge. Der erste entsteht im{' '}
                 <Link href="/admin" className="font-semibold text-rot-dunkel underline">
                   Redaktionsbereich

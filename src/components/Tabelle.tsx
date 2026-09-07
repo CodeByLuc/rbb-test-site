@@ -25,7 +25,7 @@ export function Tabelle({
   const nurBreit = 'hidden sm:table-cell'
 
   return (
-    <section className="overflow-hidden bg-nacht text-white shadow-xl">
+    <section className="kachel overflow-hidden bg-nacht text-white shadow-xl">
       <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 bg-nacht-tief px-4 py-3">
         <h2 className="text-xl sm:text-2xl">{titel}</h2>
         <span className="font-display text-xs tracking-widest text-white/40 uppercase">

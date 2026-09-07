@@ -80,7 +80,7 @@ export function Footer({ einstellungen }: { einstellungen: Einstellungen }) {
           </ul>
           <Link
             href="/admin"
-            className="mt-6 inline-block border-2 border-white/25 px-4 py-2 font-display text-sm tracking-widest uppercase hover:border-rot hover:bg-rot hover:text-white"
+            className="knopf mt-6 inline-block border-2 border-white/25 px-4 py-2 font-display text-sm tracking-widest uppercase hover:border-rot hover:bg-rot hover:text-white"
           >
             Redaktion
           </Link>

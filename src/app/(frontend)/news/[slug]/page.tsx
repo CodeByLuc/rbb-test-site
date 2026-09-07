@@ -65,7 +65,7 @@ export default async function BeitragSeite({ params }: Props) {
             bild={post.titelbild}
             groesse="hero"
             priority
-            className="mt-8 w-full object-cover shadow-sm"
+            className="kachel mt-8 w-full object-cover shadow-sm"
             sizes="(max-width: 768px) 100vw, 48rem"
           />
         )}
@@ -89,7 +89,7 @@ export default async function BeitragSeite({ params }: Props) {
                   key={eintrag.id ?? index}
                   bild={eintrag.bild}
                   groesse="card"
-                  className="aspect-[3/2] w-full object-cover shadow-sm"
+                  className="kachel aspect-[3/2] w-full object-cover shadow-sm"
                   sizes="(max-width: 640px) 100vw, 24rem"
                 />
               ))}

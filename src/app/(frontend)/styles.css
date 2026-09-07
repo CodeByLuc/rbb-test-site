@@ -20,6 +20,30 @@
 
   --font-display: var(--schrift-display), 'Arial Narrow', sans-serif;
   --font-sans: var(--schrift-text), system-ui, sans-serif;
+
+  /*
+    Massvolle Rundung: genug, damit nichts hart wirkt, wenig genug, dass die
+    kantige Formsprache des Wappens erhalten bleibt. An einer Stelle änderbar.
+  */
+  --radius-kachel: 0.625rem;
+  --radius-knopf: 0.375rem;
+  --radius-etikett: 0.25rem;
+}
+
+/* Karten, Kacheln und Kästen. */
+@utility kachel {
+  border-radius: var(--radius-kachel);
+  overflow: hidden;
+}
+
+/* Schaltflächen und Verweise, die wie Schaltflächen aussehen. */
+@utility knopf {
+  border-radius: var(--radius-knopf);
+}
+
+/* Kleine Auszeichnungen wie «Resultate» oder «Seit 1942». */
+@utility etikett {
+  border-radius: var(--radius-etikett);
 }
 
 @utility inhalt {

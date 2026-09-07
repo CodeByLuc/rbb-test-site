@@ -62,7 +62,7 @@ export function SponsorenWidget({ sponsoren }: { sponsoren: Sponsoren[] }) {
   const weitere = sponsoren.filter((s) => s.kategorie !== 'hauptsponsor').slice(0, 9)
 
   return (
-    <div className="bg-nacht text-white shadow-xl">
+    <div className="kachel bg-nacht text-white shadow-xl">
       <div className="px-5 pt-5">
         <h2 className="abschnittstitel text-2xl">Unsere Partner</h2>
         <p className="mt-1 mb-4 text-sm text-white/60">Sie machen Eishockey in Bümpliz möglich.</p>
@@ -88,7 +88,7 @@ export function SponsorenWidget({ sponsoren }: { sponsoren: Sponsoren[] }) {
       <div className="p-5">
         <Link
           href="/sponsoren"
-          className="block bg-rot px-4 py-3 text-center font-display text-base tracking-widest uppercase transition-colors hover:bg-rot-dunkel"
+          className="knopf block bg-rot px-4 py-3 text-center font-display text-base tracking-widest uppercase transition-colors hover:bg-rot-dunkel"
         >
           Sponsor werden
         </Link>

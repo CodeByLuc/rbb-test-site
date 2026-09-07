@@ -24,7 +24,7 @@ export default async function NewsSeite() {
 
       <div className="inhalt py-14">
         {posts.length === 0 ? (
-          <p className="bg-white p-8 text-grau shadow-sm">
+          <p className="kachel bg-white p-8 text-grau shadow-sm">
             Es sind noch keine Beiträge veröffentlicht.
           </p>
         ) : (

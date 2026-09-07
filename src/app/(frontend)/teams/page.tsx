@@ -24,7 +24,7 @@ function TeamKachel({ team }: { team: Team }) {
   return (
     <Link
       href={`/teams/${team.slug}`}
-      className="group relative isolate flex min-h-64 flex-col justify-end overflow-hidden bg-nacht text-white shadow-lg"
+      className="kachel group relative isolate flex min-h-64 flex-col justify-end overflow-hidden bg-nacht text-white shadow-lg"
     >
       <Bild
         bild={team.teamfoto}
@@ -37,7 +37,7 @@ function TeamKachel({ team }: { team: Team }) {
 
       <div className="relative p-5">
         {team.liga && (
-          <span className="mb-2 inline-block bg-rot px-2 py-0.5 font-display text-xs tracking-[0.18em] uppercase">
+          <span className="etikett mb-2 inline-block bg-rot px-2 py-0.5 font-display text-xs tracking-[0.18em] uppercase">
             {team.liga}
           </span>
         )}
@@ -67,7 +67,7 @@ export default async function TeamsSeite() {
 
       <div className="inhalt space-y-12 py-14">
         {teams.length === 0 && (
-          <p className="bg-white p-8 text-grau shadow-sm">Es sind noch keine Teams erfasst.</p>
+          <p className="kachel bg-white p-8 text-grau shadow-sm">Es sind noch keine Teams erfasst.</p>
         )}
 
         {kategorien.map((kategorie) => {

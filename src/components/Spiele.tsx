@@ -63,7 +63,7 @@ export function SpielZeile({ spiel, eigenerName }: { spiel: SihfSpiel; eigenerNa
 
       <div className="flex items-center gap-3">
         {spiel.abgesagt ? (
-          <span className="bg-white/15 px-2 py-1 font-display text-sm tracking-wide uppercase">
+          <span className="knopf bg-white/15 px-2 py-1 font-display text-sm tracking-wide uppercase">
             Abgesagt
           </span>
         ) : spiel.gespielt ? (
@@ -111,7 +111,7 @@ export function SpielListe({
   leerText?: string
 }) {
   return (
-    <section className="overflow-hidden bg-nacht text-white shadow-xl">
+    <section className="kachel overflow-hidden bg-nacht text-white shadow-xl">
       <div className="flex items-baseline justify-between gap-4 bg-nacht-tief px-4 py-3">
         <h2 className="text-xl sm:text-2xl">{titel}</h2>
         <span className="font-display text-xs tracking-widest text-white/40 uppercase">
@@ -150,10 +150,10 @@ export function NaechstesSpiel({
   const gegner = heimIstWir ? spiel.gast.name : spiel.heim.name
 
   return (
-    <div className="eisglanz relative overflow-hidden bg-blau text-white shadow-2xl">
+    <div className="kachel eisglanz relative overflow-hidden bg-blau text-white shadow-2xl">
       <div className="relative px-5 py-7 sm:px-8 sm:py-9">
         <div className="mb-5 flex flex-wrap items-center gap-3">
-          <span className="bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
+          <span className="etikett bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
             Nächstes Spiel
           </span>
           {teamName && (
@@ -192,10 +192,10 @@ export function LetztesResultat({
   const heimIstWir = istEigenes(spiel.heim.name, eigenerName)
 
   return (
-    <div className="eisglanz relative overflow-hidden bg-nacht-tief text-white shadow-2xl">
+    <div className="kachel eisglanz relative overflow-hidden bg-nacht-tief text-white shadow-2xl">
       <div className="relative px-5 py-7 sm:px-8 sm:py-9">
         <div className="mb-6 flex flex-wrap items-center gap-3">
-          <span className="bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
+          <span className="etikett bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
             Letztes Spiel
           </span>
           <span className="font-display text-base tracking-wide text-white/60 uppercase">
