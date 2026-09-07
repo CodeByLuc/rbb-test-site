@@ -29,7 +29,7 @@ export function Header({ logoUrl, teams }: HeaderProps) {
   const schliessen = () => setMenuOffen(false)
 
   return (
-    <header className="kachel sticky top-0 z-50 bg-nacht text-white shadow-lg shadow-nacht/20">
+    <header className="sticky top-0 z-50 bg-nacht text-white shadow-lg shadow-nacht/20">
       <div className="inhalt flex items-stretch justify-between gap-4">
         {/* Das Wappen trägt den Vereinsnamen bereits – daneben keine Wiederholung. */}
         <Link
