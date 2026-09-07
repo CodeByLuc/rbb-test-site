@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import type { Einstellungen, Team } from '../payload-types'
 import { Bild, bildDaten } from './Bild'
+import { WappenSvg } from './Logo'
 
 /**
  * Bausteine für Besucherinnen und Besucher, die den Verein noch nicht kennen.
@@ -81,7 +82,11 @@ export function TeamFinder({ teams }: { teams: Team[] }) {
                   <div className="absolute inset-0 bg-gradient-to-t from-nacht-tief via-nacht-tief/55 to-transparent" />
                 </>
               ) : (
-                <div className="eisglanz absolute inset-0 opacity-70" />
+                // Noch kein Foto hinterlegt: das Wappen als Platzhalter, statt
+                // einer leeren Fläche.
+                <div className="eisglanz absolute inset-0 flex items-center justify-center opacity-70">
+                  <WappenSvg className="h-16 w-auto max-w-none opacity-20 sm:h-20" />
+                </div>
               )}
 
               <div className="relative p-4">
