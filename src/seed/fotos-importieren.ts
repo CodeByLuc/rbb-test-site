@@ -55,6 +55,7 @@ async function main() {
     process.exit(1)
   }
 
+  const erneuern = process.argv.includes('--erneuern')
   const payload = await getPayload({ config: await configPromise })
 
   const imBlob = Boolean(process.env.BLOB_READ_WRITE_TOKEN)
@@ -82,9 +83,22 @@ async function main() {
       where: { filename: { equals: datei } },
       limit: 1,
     })
-    if (docs[0]) {
+    if (docs[0] && !erneuern) {
       angelegt.push(docs[0].id as number)
       uebersprungen++
+      continue
+    }
+    if (docs[0]) {
+      // Mit «--erneuern» wandert die Datei in den inzwischen eingerichteten
+      // Blob-Speicher, ohne dass Verknüpfungen verloren gehen.
+      const aktualisiert = await payload.update({
+        collection: 'media',
+        id: docs[0].id,
+        data: {},
+        filePath: dateipfad,
+      })
+      angelegt.push(aktualisiert.id as number)
+      console.log(`  ${String(index + 1).padStart(2)}/${dateien.length}  ${datei}  erneuert`)
       continue
     }
 
@@ -147,7 +161,7 @@ async function main() {
         `Eindrücke ${teamName ? `unserer ${teamName} ` : ''}von der Kunsteisbahn Weyermannshaus.`,
       ]),
       titelbild: angelegt[0],
-      bildergalerie: angelegt.slice(1, 25).map((id) => ({ bild: id })),
+      galerie: angelegt.slice(1, 25).map((id) => ({ bild: id })),
       datum: new Date().toISOString().slice(0, 10),
       typ: 'news',
       _status: 'published',
@@ -155,10 +169,10 @@ async function main() {
 
     if (docs[0]) {
       await payload.update({ collection: 'posts', id: docs[0].id, data: daten as never })
-      console.log(`Beitrag «${beitragTitel}» aktualisiert (${daten.bildergalerie.length} Bilder).`)
+      console.log(`Beitrag «${beitragTitel}» aktualisiert (${daten.galerie.length} Bilder).`)
     } else {
       await payload.create({ collection: 'posts', data: daten as never })
-      console.log(`Beitrag «${beitragTitel}» angelegt (${daten.bildergalerie.length} Bilder).`)
+      console.log(`Beitrag «${beitragTitel}» angelegt (${daten.galerie.length} Bilder).`)
     }
   }
 

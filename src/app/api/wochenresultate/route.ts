@@ -66,6 +66,17 @@ export async function GET(anfrage: NextRequest) {
       return NextResponse.json({ vorschau: true, ...zusammenfassung })
     }
 
+    // In der Sommerpause wird wochenlang nicht gespielt. Ohne diese Bremse
+    // entstünde jeden Montag ein Beitrag «keine Meisterschaftsspiele
+    // ausgetragen», der die echten Vereinsnachrichten nach unten schiebt.
+    if (resultate.length === 0) {
+      return NextResponse.json({
+        angelegt: false,
+        grund: 'In diesem Zeitraum wurden keine Spiele ausgetragen.',
+        ...zusammenfassung,
+      })
+    }
+
     // Läuft der Job zweimal, wird der bestehende Beitrag aktualisiert statt verdoppelt.
     const { docs: vorhanden } = await payload.find({
       collection: 'posts',
