@@ -1,6 +1,7 @@
 import Link from 'next/link'
 
 import { Bild, bildDaten } from '../../components/Bild'
+import { SoGehtLos, TeamFinder } from '../../components/Einstieg'
 import { Logo } from '../../components/Logo'
 import { PostKarte } from '../../components/PostKarte'
 import { LetztesResultat, NaechstesSpiel } from '../../components/Spiele'
@@ -125,6 +126,7 @@ export default async function Startseite() {
   const tabellenTeam = plaene.find((eintrag) => eintrag.plan.tabelle.length > 0)
 
   const [neuester, ...weitere] = posts
+  const hockeyschule = teams.find((team) => /hockeyschule/i.test(team.name))
   const heroFoto = teams.find((team) => team.teamfoto)?.teamfoto ?? neuester?.titelbild
   const hero = bildDaten(heroFoto, 'hero')
   const bandFoto = stimmungsbild ?? null
@@ -145,35 +147,37 @@ export default async function Startseite() {
         <div className="absolute inset-0 bg-gradient-to-r from-nacht-tief via-nacht-tief/90 to-nacht-tief/40" />
         <div className="eisglanz absolute inset-0 opacity-70" />
 
-        <div className="inhalt relative grid gap-8 py-14 sm:py-20 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-12">
-          <Logo logo={einstellungen.logo} className="h-32 w-auto drop-shadow-2xl sm:h-44 lg:h-60" />
+        <div className="inhalt relative grid gap-8 py-12 sm:py-16 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-12">
+          <Logo logo={einstellungen.logo} className="h-28 w-auto drop-shadow-2xl sm:h-40 lg:h-52" />
 
           <div>
             <p className="mb-3 flex flex-wrap items-center gap-2 font-display text-sm tracking-[0.28em] uppercase">
-              <span className="bg-rot px-2 py-0.5">Seit 1949</span>
+              <span className="bg-rot px-2 py-0.5">Seit 1942</span>
               <span className="text-white/70">Eishockey in Bern-Bümpliz</span>
             </p>
-            <h1 className="text-6xl leading-[0.82] sm:text-8xl lg:text-9xl">
+            <h1 className="text-5xl leading-[0.85] sm:text-7xl lg:text-8xl">
               Rot-Blau
               <span className="mt-1 block text-rot">Bern-Bümpliz</span>
             </h1>
-            {einstellungen.claim && (
-              <p className="mt-5 max-w-2xl text-lg text-white/80 sm:text-xl">
-                {einstellungen.claim}
-              </p>
-            )}
+
+            {/* Ein Satz, der auch ohne Vorwissen erklärt, worum es geht. */}
+            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/85 sm:text-xl">
+              {einstellungen.claim ??
+                'Unser Verein bringt Kinder ab vier Jahren aufs Eis und begleitet sie bis in die Aktivmannschaft. Mitmachen kann jede und jeder – Vorkenntnisse braucht es keine.'}
+            </p>
+
             <div className="mt-8 flex flex-wrap gap-3">
-              <Link
-                href="/teams"
+              <a
+                href="#einstieg"
                 className="bg-rot px-7 py-3.5 font-display text-xl tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
               >
-                Unsere Teams
-              </Link>
+                Eishockey ausprobieren
+              </a>
               <Link
-                href="/verein"
+                href="/teams"
                 className="border-2 border-white/45 px-7 py-3.5 font-display text-xl tracking-wide uppercase transition-colors hover:border-white hover:bg-white hover:text-nacht"
               >
-                Mitglied werden
+                Teams und Spielplan
               </Link>
             </div>
           </div>
@@ -207,6 +211,14 @@ export default async function Startseite() {
 
         <div className="trikotband" />
       </section>
+
+      {/* Zuerst die Orientierung: Wohin gehöre ich? */}
+      <TeamFinder teams={teams} />
+
+      {/* Dann der Weg zum ersten Training. */}
+      <div id="einstieg" className="scroll-mt-24">
+        <SoGehtLos einstellungen={einstellungen} hockeyschule={hockeyschule} />
+      </div>
 
       {/* Nächstes Spiel und letztes Resultat gross nebeneinander */}
       {(naechste || resultate[0]) && (
@@ -261,15 +273,8 @@ export default async function Startseite() {
               <span className="mt-1 block text-rot">Alle für einen</span>
             </p>
             <p className="mx-auto mt-5 max-w-2xl text-white/80 sm:text-lg">
-              Bei uns spielen Kinder, Jugendliche und Erwachsene – vom ersten Schritt auf dem Eis bis
-              zur Meisterschaft.
+              Seit 1942 Eishockey im Westen von Bern.
             </p>
-            <Link
-              href="/verein"
-              className="mt-7 inline-block bg-rot px-8 py-4 font-display text-xl tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
-            >
-              Komm zu uns
-            </Link>
           </div>
           <div className="absolute bottom-0 left-0 right-0 trikotband" />
         </section>
