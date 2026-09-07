@@ -52,6 +52,16 @@ export function TeamKompakt({
 }) {
   const eigeneZeile = tabelle.find((z) => istEigenes(z.name, eigenerName))
 
+  /*
+    Die Tabelle fuehrt Siege und Niederlagen nach Verlaengerung getrennt, weil
+    sie unterschiedlich viele Punkte geben. Fuer die Kurzuebersicht zaehlen nur
+    Sieg oder Niederlage -- sonst steht hier «7 Siege», waehrend die Bilanz im
+    Seitenkopf 8 nennt.
+  */
+  const siegeGesamt = (eigeneZeile?.siege ?? 0) + (eigeneZeile?.siegeVerlaengerung ?? 0)
+  const niederlagenGesamt =
+    (eigeneZeile?.niederlagen ?? 0) + (eigeneZeile?.niederlagenVerlaengerung ?? 0)
+
   // Ohne jede dieser Angaben gäbe es nichts zu zeigen.
   if (!eigeneZeile && !letztes && !naechstes) return null
 
@@ -76,8 +86,8 @@ export function TeamKompakt({
             </span>
           </p>
           <p className="mt-1 text-xs text-white/45">
-            {eigeneZeile.siege} Siege · {eigeneZeile.niederlagen} Niederlagen · Tore{' '}
-            {eigeneZeile.tore}:{eigeneZeile.gegentore}
+            {siegeGesamt} Siege · {niederlagenGesamt} Niederlagen · Tore {eigeneZeile.tore}:
+            {eigeneZeile.gegentore}
           </p>
         </Zeile>
       )}
