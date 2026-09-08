@@ -154,33 +154,7 @@ export async function holeStimmungsbild(): Promise<Media | null> {
   )
 }
 
-/**
- * Bilder, die zu einem Team gehören.
- *
- * Beim Import bekommt jedes Bild einen Alternativtext mit dem Teamnamen
- * («Damen des EHC Rot-Blau Bern-Bümpliz»). Danach wird hier gesucht – die
- * Mediathek hat kein eigenes Teamfeld, und für die Bildergalerie auf der
- * Teamseite genügt das.
- */
-export async function holeTeamBilder(teamName: string, limit = 24): Promise<Media[]> {
-  return sicher(
-    `Bilder von ${teamName}`,
-    async () => {
-      const payload = await payloadHolen()
-      const { docs } = await payload.find({
-        collection: 'media',
-        where: { alt: { like: teamName } },
-        limit,
-        sort: 'filename',
-      })
-      return docs
-    },
-    [],
-  )
-}
-
-export async function holeGlobal<
-T extends 'eishockey' | 'verein'>(
+export async function holeGlobal<T extends 'eishockey' | 'verein'>(
   slug: T,
 ): Promise<T extends 'eishockey' ? Eishockey : Verein> {
   type Ergebnis = T extends 'eishockey' ? Eishockey : Verein

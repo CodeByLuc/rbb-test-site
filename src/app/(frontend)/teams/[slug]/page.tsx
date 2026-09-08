@@ -9,7 +9,7 @@ import { Seitenkopf } from '../../../../components/Seitenkopf'
 import { LetztesResultat, NaechstesSpiel, SpielListe } from '../../../../components/Spiele'
 import { Tabelle } from '../../../../components/Tabelle'
 import { TeamKompakt } from '../../../../components/TeamKompakt'
-import { holePosts, holeTeam, holeTeamBilder, holeTeams } from '../../../../lib/daten'
+import { holePosts, holeTeam, holeTeams } from '../../../../lib/daten'
 import { holeTeamSpielplan, saisonAlias } from '../../../../lib/sihf'
 
 export const revalidate = 3600
@@ -44,14 +44,13 @@ export default async function TeamSeite({ params }: Props) {
   const team = await holeTeam(slug)
   if (!team) notFound()
 
-  const [plan, posts, teamBilder] = await Promise.all([
+  const [plan, posts] = await Promise.all([
     holeTeamSpielplan({
       ligaId: team.sihfLeagueId,
       teamId: team.sihfTeamId,
       teamName: team.sihfTeamName,
     }),
     holePosts({ limit: 3, teamId: team.id }),
-    holeTeamBilder(team.name),
   ])
 
   // In der Sommerpause hat die neue Saison noch keine Spiele – dann zeigen wir die letzte.
@@ -73,10 +72,6 @@ export default async function TeamSeite({ params }: Props) {
   const trainer = team.trainer ?? []
   const trainings = team.trainingszeiten ?? []
   const teamfoto = bildDaten(team.teamfoto, 'hero')
-
-  // Das Teamfoto steht schon oben gross – in der Galerie waere es doppelt.
-  const teamfotoId = typeof team.teamfoto === 'object' ? team.teamfoto?.id : team.teamfoto
-  const portraets = teamBilder.filter((bild) => bild.id !== teamfotoId)
 
   return (
     <>
@@ -184,29 +179,6 @@ export default async function TeamSeite({ params }: Props) {
                         <p className="text-xs text-grau">{positionsNamen[person.position]}</p>
                       )}
                     </div>
-                  </div>
-                ))}
-              </div>
-            </section>
-          )}
-
-          {/*
-            Porträts aus der Mediathek. Welches Bild welche Person zeigt, geht
-            aus den Kameradateinamen nicht hervor – darum stehen sie als
-            Galerie und nicht mit Namen beim Kader.
-          */}
-          {portraets.length > 0 && (
-            <section>
-              <h2 className="abschnittstitel mb-5 text-4xl text-nacht">Porträts</h2>
-              <div className="grid grid-cols-3 gap-3 sm:grid-cols-4 lg:grid-cols-5">
-                {portraets.map((bild) => (
-                  <div key={bild.id} className="kachel overflow-hidden bg-nacht shadow-sm">
-                    <Bild
-                      bild={bild}
-                      groesse="portrait"
-                      className="aspect-[3/4] w-full object-cover"
-                      sizes="(max-width: 640px) 33vw, 12rem"
-                    />
                   </div>
                 ))}
               </div>
