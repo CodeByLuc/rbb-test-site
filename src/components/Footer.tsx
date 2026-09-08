@@ -14,7 +14,11 @@ export function Footer({ einstellungen }: { einstellungen: Einstellungen }) {
   const jahr = new Date().getFullYear()
 
   return (
-    <footer className="mt-16 bg-nacht-tief text-white/80">
+    // Kein Abstand nach oben: jede Seite bringt über ihr eigenes Bottom-Padding
+    // schon genug Luft mit. Ein fester mt-16 hätte sonst zwischen einem
+    // dunklen letzten Abschnitt (z. B. dem Fotoband) und dem dunklen Footer
+    // einen hellen Streifen vom Seitenhintergrund durchscheinen lassen.
+    <footer className="bg-nacht-tief text-white/80">
       <div className="trikotband" />
 
       <div className="inhalt grid gap-10 py-12 sm:grid-cols-2 lg:grid-cols-[auto_1fr_1fr_1fr] lg:gap-14">
