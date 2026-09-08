@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 
 import { PostKarte } from '../../../components/PostKarte'
 import { Seitenkopf } from '../../../components/Seitenkopf'
-import { holePosts, holeStimmungsbild } from '../../../lib/daten'
+import { holePosts } from '../../../lib/daten'
 
 export const revalidate = 300
 
@@ -12,14 +12,13 @@ export const metadata: Metadata = {
 }
 
 export default async function NewsSeite() {
-  const [posts, kopfbild] = await Promise.all([holePosts({ limit: 50 }), holeStimmungsbild()])
+  const posts = await holePosts({ limit: 50 })
 
   return (
     <>
       <Seitenkopf
         titel="News"
         untertitel="Spielberichte, Wochenresultate und Mitteilungen aus dem Verein."
-        hintergrundbild={kopfbild}
       />
 
       <div className="inhalt py-14">

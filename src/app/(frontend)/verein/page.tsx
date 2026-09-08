@@ -3,7 +3,7 @@ import type { Metadata } from 'next'
 import { Bild } from '../../../components/Bild'
 import { Fliesstext } from '../../../components/Fliesstext'
 import { Seitenkopf } from '../../../components/Seitenkopf'
-import { holeGlobal, holeStimmungsbild } from '../../../lib/daten'
+import { holeGlobal } from '../../../lib/daten'
 
 export const revalidate = 3600
 
@@ -13,7 +13,7 @@ export const metadata: Metadata = {
 }
 
 export default async function VereinSeite() {
-  const [verein, kopfbild] = await Promise.all([holeGlobal('verein'), holeStimmungsbild()])
+  const verein = await holeGlobal('verein')
   const vorstand = verein.vorstand ?? []
   const bilder = verein.historischeBilder ?? []
 
@@ -34,7 +34,6 @@ export default async function VereinSeite() {
             ? `Eishockey in Bern-Bümpliz seit ${verein.gruendungsjahr}.`
             : 'Wer wir sind und wofür wir stehen.'
         }
-        hintergrundbild={kopfbild}
       />
 
       <div className="inhalt space-y-14 py-14">

@@ -1,48 +1,31 @@
-import { Bild, bildDaten, type BildQuelle } from './Bild'
-
-/** Einheitlicher Kopfbereich für alle Unterseiten – dunkel und kräftig. */
+/**
+ * Einheitlicher Kopfbereich für alle Unterseiten.
+ *
+ * Früher ein dunkler, ganzflächiger Block mit Hintergrundfoto, Farbverlauf
+ * und einer 8px-Trikotband-Leiste am unteren Rand – auf jeder Unterseite ein
+ * eigener kleiner Hero. Rückmeldung: dieser Kasten wirkt zu wuchtig und zu
+ * dominant, bevor der eigentliche Inhalt überhaupt beginnt.
+ *
+ * Jetzt steht der Titel direkt auf dem normalen Seitenhintergrund, wie jede
+ * andere Überschrift auf der Seite auch – die dunkle, fotohinterlegte
+ * Bildsprache bleibt der Startseite vorbehalten.
+ */
 export function Seitenkopf({
   titel,
   untertitel,
   zusatz,
-  hintergrundbild,
 }: {
   titel: string
   untertitel?: string | null
   zusatz?: React.ReactNode
-  hintergrundbild?: BildQuelle
 }) {
-  const bild = bildDaten(hintergrundbild, 'hero')
-
   return (
-    <section className="relative isolate overflow-hidden bg-nacht text-white">
-      {bild && (
-        <Bild
-          bild={hintergrundbild}
-          groesse="hero"
-          priority
-          className="absolute inset-0 h-full w-full object-cover opacity-35"
-          sizes="100vw"
-        />
+    <div className="inhalt pt-8 pb-2 sm:pt-10">
+      <h1 className="abschnittstitel text-4xl text-nacht sm:text-5xl">{titel}</h1>
+      {untertitel && (
+        <p className="mt-3 max-w-2xl text-base text-grau sm:text-lg">{untertitel}</p>
       )}
-      <div className="absolute inset-0 bg-gradient-to-r from-nacht via-nacht/85 to-nacht/50" />
-      <div className="eisglanz absolute inset-0 opacity-60" />
-
-      <div className="inhalt relative py-12 sm:py-16">
-        <h1 className="text-5xl leading-[0.85] sm:text-6xl lg:text-7xl">{titel}</h1>
-        {untertitel && (
-          <p className="mt-4 max-w-2xl text-lg text-white/75">{untertitel}</p>
-        )}
-        {zusatz && <div className="mt-6">{zusatz}</div>}
-      </div>
-
-      {/*
-        Früher stand hier die 8px hohe Trikotband-Leiste (Rot/Weiss/Blau/Weiss)
-        – auf jeder Unterseite, deutlich sichtbar direkt unter dem Titel.
-        Wirkte zu wuchtig; eine schlichte Kante trennt Kopf und Inhalt ebenso
-        klar, ohne die Aufmerksamkeit auf sich zu ziehen.
-      */}
-      <div className="border-b border-white/10" />
-    </section>
+      {zusatz && <div className="mt-4">{zusatz}</div>}
+    </div>
   )
 }

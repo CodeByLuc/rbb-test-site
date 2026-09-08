@@ -81,17 +81,17 @@ export default async function TeamSeite({ params }: Props) {
         zusatz={
           <div className="flex flex-wrap items-center gap-3 text-sm">
             {team.liga && (
-              <span className="knopf bg-white/15 px-3 py-1 font-display tracking-wide uppercase">
+              <span className="knopf bg-nacht px-3 py-1 font-display tracking-wide text-white uppercase">
                 {team.liga}
               </span>
             )}
             {anzeige && anzeige.spiele.length > 0 && (
-              <span className="text-white/75">
+              <span className="text-grau">
                 {anzeige.bilanz.siege} Siege · {anzeige.bilanz.niederlagen} Niederlagen · Tore{' '}
                 {anzeige.bilanz.tore}:{anzeige.bilanz.gegentore}
               </span>
             )}
-            <Link href="/teams" className="text-white/70 underline hover:text-white">
+            <Link href="/teams" className="text-rot-dunkel underline hover:text-rot">
               Alle Teams
             </Link>
           </div>

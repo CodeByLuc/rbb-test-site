@@ -1,0 +1,24 @@
+Seitenkopf-Kasten komplett entfernen (nicht nur die Leiste)
+
+Praezisiert nach erneuter Rueckmeldung: gemeint war nicht die duenne
+Trennlinie, sondern der ganze dunkle, ganzflaechige Kopfbereich mit
+Hintergrundfoto und Farbverlauf -- auf jeder Unterseite ein eigener kleiner
+Hero, bevor der eigentliche Inhalt beginnt.
+
+Seitenkopf.tsx komplett neu: kein dunkler Block mehr, kein Hintergrundfoto,
+kein Farbverlauf. Titel steht jetzt direkt auf dem normalen hellen
+Seitenhintergrund, im selben Stil wie jede andere Ueberschrift der Seite
+(abschnittstitel mit rotem Schraegbalken). Betrifft News, Teams, Verein,
+jede Teamseite und Sponsoren -- die Startseite hat weiterhin ihren eigenen
+dunklen Hero und ist unveraendert.
+
+Der Zusatzbereich auf der Teamseite (Liga-Badge, Bilanz, Alle-Teams-Link) war
+fuer hellen Text auf dunklem Grund gestylt -- auf hellem Hintergrund waere
+das weiss auf weiss gewesen. Auf dunkle Badge-Farbe und dunklen Text
+umgestellt.
+
+In News, Sponsoren, Teams und Verein damit auch das ungenutzte
+Hintergrundfoto-Laden (holeStimmungsbild) entfernt, das nur noch fuer den
+jetzt verschwundenen Kasten gebraucht wurde.
+
+Co-Authored-By: Claude Opus 5 <noreply@anthropic.com>

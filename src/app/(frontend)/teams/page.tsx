@@ -55,14 +55,12 @@ function TeamKachel({ team }: { team: Team }) {
 
 export default async function TeamsSeite() {
   const teams = await holeTeams()
-  const kopfbild = teams.find((team) => team.teamfoto)?.teamfoto
 
   return (
     <>
       <Seitenkopf
         titel="Teams"
         untertitel="Neun Mannschaften, ein Verein – vom ersten Schritt auf dem Eis bis zur Meisterschaft."
-        hintergrundbild={kopfbild}
       />
 
       <div className="inhalt space-y-12 py-14">
