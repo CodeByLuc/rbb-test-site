@@ -16,7 +16,6 @@ type HeaderProps = {
 const hauptNavigation = [
   { titel: 'News', pfad: '/news' },
   { titel: 'Teams', pfad: '/teams' },
-  { titel: 'Eishockey', pfad: '/eishockey' },
   { titel: 'Verein', pfad: '/verein' },
   { titel: 'Sponsoren', pfad: '/sponsoren' },
 ]
@@ -121,7 +120,14 @@ export function Header({ logoUrl, teams }: HeaderProps) {
         </button>
       </div>
 
-      <div className="trikotband" />
+      {/*
+        Früher stand hier die 8px hohe Trikotband-Leiste (Rot/Weiss/Blau/Weiss)
+        – über die ganze Kopfzeile hinweg, unabhängig vom aktiven Menüpunkt,
+        wirkte der blaue Anteil viel zu wuchtig. Welcher Menüpunkt aktiv ist,
+        zeigt bereits die dünne rote Linie direkt darunter (oben, `h-1 bg-rot`
+        bei `aktiv`) – hier reicht eine schlichte Kante zur Abgrenzung.
+      */}
+      <div className="border-b border-white/10" />
 
       {menuOffen && (
         <nav

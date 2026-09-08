@@ -53,7 +53,6 @@ export function Footer({ einstellungen }: { einstellungen: Einstellungen }) {
             {[
               { titel: 'News', pfad: '/news' },
               { titel: 'Teams', pfad: '/teams' },
-              { titel: 'Eishockey', pfad: '/eishockey' },
               { titel: 'Verein', pfad: '/verein' },
               { titel: 'Sponsoren', pfad: '/sponsoren' },
             ].map((eintrag) => (
