@@ -1,12 +1,9 @@
 import Link from 'next/link'
 
 import { Bild, bildDaten } from '../../components/Bild'
-import { SoGehtLos, TeamFinder } from '../../components/Einstieg'
 import { Logo } from '../../components/Logo'
 import { PostKarte } from '../../components/PostKarte'
-import { LetztesResultat, NaechstesSpiel } from '../../components/Spiele'
 import { SponsorenWidget } from '../../components/SponsorenWidget'
-import { Tabelle } from '../../components/Tabelle'
 import {
   holeEinstellungen,
   holePosts,
@@ -120,16 +117,7 @@ export default async function Startseite() {
       return db - da
     })
 
-  // Die nächste Partie über alle Teams hinweg.
-  const naechste = plaene
-    .flatMap((eintrag) => eintrag.plan.naechste.map((spiel) => ({ team: eintrag.team, spiel })))
-    .sort((a, b) => (a.spiel.zeitpunkt ?? '').localeCompare(b.spiel.zeitpunkt ?? ''))[0]
-
-  // Tabelle des ersten Teams mit Anbindung.
-  const tabellenTeam = plaene.find((eintrag) => eintrag.plan.tabelle.length > 0)
-
   const [neuester, ...weitere] = posts
-  const hockeyschule = teams.find((team) => /hockeyschule/i.test(team.name))
   const heroFoto = teams.find((team) => team.teamfoto)?.teamfoto ?? neuester?.titelbild
   const hero = bildDaten(heroFoto, 'hero')
   const bandFoto = stimmungsbild ?? null
@@ -175,12 +163,12 @@ export default async function Startseite() {
             </p>
 
             <div className="mt-5 flex flex-wrap gap-3">
-              <a
-                href="#einstieg"
+              <Link
+                href="/teams/hockeyschule"
                 className="knopf bg-rot px-6 py-2.5 font-display text-lg tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
               >
                 Eishockey ausprobieren
-              </a>
+              </Link>
               <Link
                 href="/teams"
                 className="knopf border-2 border-white/45 px-6 py-2.5 font-display text-lg tracking-wide uppercase transition-colors hover:border-white hover:bg-white hover:text-nacht"
@@ -219,51 +207,6 @@ export default async function Startseite() {
 
         <div className="trikotband" />
       </section>
-
-      {/* Zuerst die Orientierung: Wohin gehöre ich? */}
-      <TeamFinder teams={teams} />
-
-      {/* Dann der Weg zum ersten Training. */}
-      <div id="einstieg" className="scroll-mt-24">
-        <SoGehtLos einstellungen={einstellungen} hockeyschule={hockeyschule} />
-      </div>
-
-      {/* Nächstes Spiel und letztes Resultat gross nebeneinander */}
-      {(naechste || resultate[0]) && (
-        <section className="inhalt py-8">
-          <h2 className="abschnittstitel mb-4 text-3xl text-nacht sm:text-4xl">Spielbetrieb</h2>
-          <div className="grid gap-5 lg:grid-cols-2">
-            {naechste ? (
-              <NaechstesSpiel
-                spiel={naechste.spiel}
-                eigenerName={naechste.team.sihfTeamName || 'Rot-Blau'}
-                teamName={naechste.team.name}
-              />
-            ) : (
-              <div className="kachel eisglanz flex flex-col justify-center bg-blau px-6 py-6 text-white shadow-2xl">
-                <span className="etikett mb-2 w-fit bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
-                  Nächstes Spiel
-                </span>
-                <p className="font-display text-2xl leading-[0.9] uppercase sm:text-3xl">
-                  Der Spielplan der neuen Saison
-                  <span className="mt-1 block text-white/70">folgt in Kürze</span>
-                </p>
-                <p className="mt-3 text-sm text-white/70">
-                  Sobald Swiss Ice Hockey die Ansetzungen veröffentlicht, erscheinen sie hier
-                  automatisch.
-                </p>
-              </div>
-            )}
-
-            {resultate[0] && (
-              <LetztesResultat
-                spiel={resultate[0].spiel}
-                eigenerName={resultate[0].team.sihfTeamName || 'Rot-Blau'}
-              />
-            )}
-          </div>
-        </section>
-      )}
 
       {/* Foto-Band mit Slogan – nur sinnvoll, wenn es ein Foto dafür gibt. */}
       {bildDaten(bandFoto, 'hero') && (
@@ -325,28 +268,6 @@ export default async function Startseite() {
           </aside>
         </div>
       </section>
-
-      {/* Tabelle */}
-      {tabellenTeam && (
-        <section className="inhalt pb-10">
-          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="abschnittstitel text-3xl text-nacht sm:text-4xl">Tabelle</h2>
-            <Link
-              href={`/teams/${tabellenTeam.team.slug}`}
-              className="font-display text-base tracking-wide text-rot-dunkel uppercase hover:underline"
-            >
-              {tabellenTeam.team.name}
-              {tabellenTeam.team.liga ? ` · ${tabellenTeam.team.liga}` : ''} →
-            </Link>
-          </div>
-          <Tabelle
-            zeilen={tabellenTeam.plan.tabelle}
-            eigenerName={tabellenTeam.team.sihfTeamName || 'Rot-Blau'}
-            titel={`${tabellenTeam.team.name}${tabellenTeam.team.liga ? ` – ${tabellenTeam.team.liga}` : ''}`}
-            tabellenUrl={tabellenTeam.team.tabellenUrl}
-          />
-        </section>
-      )}
     </>
   )
 }
