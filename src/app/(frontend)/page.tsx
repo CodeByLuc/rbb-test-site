@@ -57,34 +57,27 @@ async function alleSpielplaene(
   return { plaene: alt, istVorsaison: alt.length > 0 }
 }
 
-/** Ein Resultat in der dunklen Leiste unter dem Hero. */
-function ResultatKachel({ team, spiel }: { team: Team; spiel: SihfSpiel }) {
+/** Ein Resultat als schmale Zeile im Resultate-Feed. */
+function ResultatZeile({ team, spiel }: { team: Team; spiel: SihfSpiel }) {
   const eigenerName = team.sihfTeamName || 'Rot-Blau'
   const wirSindHeim = spiel.heim.name.toLowerCase().includes(eigenerName.toLowerCase())
   const eigene = wirSindHeim ? spiel.toreHeim! : spiel.toreGast!
   const fremde = wirSindHeim ? spiel.toreGast! : spiel.toreHeim!
   const gegner = wirSindHeim ? spiel.gast.name : spiel.heim.name
-  const streifen =
-    eigene > fremde ? 'bg-emerald-500' : eigene < fremde ? 'bg-rot' : 'bg-white/40'
+  const streifen = eigene > fremde ? 'border-emerald-500' : eigene < fremde ? 'border-rot' : 'border-white/40'
 
   return (
     <Link
       href={`/teams/${team.slug}`}
-      className="relative flex items-center gap-4 bg-white/5 px-4 py-2.5 transition-colors hover:bg-white/12"
+      className={`flex w-56 shrink-0 items-center justify-between gap-3 border-l-2 bg-white/5 py-2 pr-3 pl-3 transition-colors hover:bg-white/12 ${streifen}`}
     >
-      <span className={`absolute inset-y-0 left-0 w-1.5 ${streifen}`} />
-      <div className="min-w-0 flex-1">
-        <p className="truncate font-display text-lg leading-none tracking-wide uppercase">
-          {team.name}
-        </p>
-        <p className="mt-1 truncate text-sm text-white/55">
+      <span className="min-w-0 truncate">
+        <span className="font-display text-sm tracking-wide text-white uppercase">{team.name}</span>
+        <span className="ml-2 truncate text-xs text-white/50">
           {wirSindHeim ? 'gegen' : 'bei'} {gegner}
-        </p>
-        <p className="mt-0.5 font-display text-xs tracking-widest text-white/35 uppercase">
-          {spiel.wochentag} {spiel.datum}
-        </p>
-      </div>
-      <span className="tafelzahl shrink-0 text-4xl">
+        </span>
+      </span>
+      <span className="tafelzahl shrink-0 text-lg">
         {eigene}
         <span className="text-rot">:</span>
         {fremde}
@@ -179,26 +172,26 @@ export default async function Startseite() {
           </div>
         </div>
 
-        {/* Resultate als Anzeigetafel */}
+        {/* Resultate als schmaler Feed – ein Ticker, keine Anzeigetafel. */}
         {resultate.length > 0 && (
           <div className="relative border-t border-white/12 bg-black/35">
-            <div className="inhalt">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 pt-3 pb-2">
-                <h2 className="abschnittstitel flex flex-wrap items-baseline gap-3 text-2xl">
-                  Letzte Resultate
-                  {istVorsaison && (
-                    <span className="font-sans text-xs font-semibold tracking-[0.18em] text-white/45 normal-case">
-                      Saison {Number(saisonAlias()) - 2}/{String(Number(saisonAlias()) - 1).slice(2)}
-                    </span>
-                  )}
-                </h2>
-                <span className="font-display text-xs tracking-widest text-white/40 uppercase">
-                  automatisch von Swiss Ice Hockey
-                </span>
-              </div>
-              <div className="grid gap-px bg-white/10 pb-4 sm:grid-cols-2 lg:grid-cols-4">
+            <div className="inhalt flex items-center gap-4 py-1.5">
+              <h2 className="abschnittstitel shrink-0 py-1 text-sm whitespace-nowrap text-white/70">
+                Letzte Resultate
+                {istVorsaison && (
+                  <span className="ml-2 hidden font-sans text-xs font-normal text-white/40 normal-case sm:inline">
+                    Saison {Number(saisonAlias()) - 2}/{String(Number(saisonAlias()) - 1).slice(2)}
+                  </span>
+                )}
+              </h2>
+              {/*
+                Echter Ticker: die Zeilen bleiben immer einzeilig und laufen bei
+                Platzmangel seitlich weg, statt umzubrechen und die Leiste hoch
+                zu machen.
+              */}
+              <div className="-mr-4 flex min-w-0 flex-1 gap-px overflow-x-auto bg-white/10 pr-4">
                 {resultate.map((eintrag) => (
-                  <ResultatKachel key={eintrag.team.id} {...eintrag} />
+                  <ResultatZeile key={eintrag.team.id} {...eintrag} />
                 ))}
               </div>
             </div>
@@ -207,29 +200,6 @@ export default async function Startseite() {
 
         <div className="trikotband" />
       </section>
-
-      {/* Foto-Band mit Slogan – nur sinnvoll, wenn es ein Foto dafür gibt. */}
-      {bildDaten(bandFoto, 'hero') && (
-        <section className="relative isolate flex min-h-52 items-center overflow-hidden bg-nacht text-white sm:min-h-64">
-          <Bild
-            bild={bandFoto}
-            groesse="hero"
-            className="absolute inset-0 h-full w-full object-cover"
-            sizes="100vw"
-          />
-          <div className="absolute inset-0 bg-gradient-to-t from-nacht-tief via-nacht-tief/55 to-nacht-tief/25" />
-          <div className="inhalt relative py-7 text-center">
-            <p className="font-display text-4xl leading-[0.85] uppercase sm:text-5xl lg:text-6xl">
-              Einer für alle
-              <span className="mt-1 block text-rot">Alle für einen</span>
-            </p>
-            <p className="mx-auto mt-3 max-w-2xl text-white/80 sm:text-lg">
-              Seit 1942 Eishockey im Westen von Bern.
-            </p>
-          </div>
-          <div className="absolute bottom-0 left-0 right-0 trikotband" />
-        </section>
-      )}
 
       {/* News und Sponsoren */}
       <section className="inhalt py-8">
@@ -268,6 +238,29 @@ export default async function Startseite() {
           </aside>
         </div>
       </section>
+
+      {/* Foto-Band mit Slogan – nur sinnvoll, wenn es ein Foto dafür gibt. */}
+      {bildDaten(bandFoto, 'hero') && (
+        <section className="relative isolate flex min-h-52 items-center overflow-hidden bg-nacht text-white sm:min-h-64">
+          <Bild
+            bild={bandFoto}
+            groesse="hero"
+            className="absolute inset-0 h-full w-full object-cover"
+            sizes="100vw"
+          />
+          <div className="absolute inset-0 bg-gradient-to-t from-nacht-tief via-nacht-tief/55 to-nacht-tief/25" />
+          <div className="inhalt relative py-7 text-center">
+            <p className="font-display text-4xl leading-[0.85] uppercase sm:text-5xl lg:text-6xl">
+              Einer für alle
+              <span className="mt-1 block text-rot">Alle für einen</span>
+            </p>
+            <p className="mx-auto mt-3 max-w-2xl text-white/80 sm:text-lg">
+              Seit 1942 Eishockey im Westen von Bern.
+            </p>
+          </div>
+          <div className="absolute top-0 left-0 right-0 trikotband" />
+        </section>
+      )}
     </>
   )
 }
