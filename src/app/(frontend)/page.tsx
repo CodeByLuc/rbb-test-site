@@ -205,15 +205,7 @@ export default async function Startseite() {
       <section className="inhalt py-8">
         <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
           <div>
-            <div className="mb-4 flex items-baseline justify-between gap-4">
-              <h2 className="abschnittstitel text-3xl text-nacht sm:text-4xl">News</h2>
-              <Link
-                href="/news"
-                className="font-display text-base tracking-wide text-rot-dunkel uppercase hover:underline"
-              >
-                Alle News →
-              </Link>
-            </div>
+            <h2 className="abschnittstitel mb-4 text-3xl text-nacht sm:text-4xl">News</h2>
 
             {posts.length === 0 ? (
               <p className="kachel bg-white p-8 text-grau shadow-sm">

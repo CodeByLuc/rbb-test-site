@@ -14,7 +14,6 @@ type HeaderProps = {
 }
 
 const hauptNavigation = [
-  { titel: 'News', pfad: '/news' },
   { titel: 'Teams', pfad: '/teams' },
   { titel: 'Verein', pfad: '/verein' },
   { titel: 'Sponsoren', pfad: '/sponsoren' },

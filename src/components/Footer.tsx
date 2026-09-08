@@ -51,7 +51,6 @@ export function Footer({ einstellungen }: { einstellungen: Einstellungen }) {
           <h3 className="abschnittstitel mb-4 text-xl text-white">Seiten</h3>
           <ul className="space-y-2 font-display text-base tracking-wide uppercase">
             {[
-              { titel: 'News', pfad: '/news' },
               { titel: 'Teams', pfad: '/teams' },
               { titel: 'Verein', pfad: '/verein' },
               { titel: 'Sponsoren', pfad: '/sponsoren' },

@@ -39,11 +39,15 @@ export default async function BeitragSeite({ params }: Props) {
     <article className="pb-16">
       <div className="bg-blau text-white">
         <div className="inhalt max-w-3xl py-12 sm:py-16">
+          {/*
+            Keine eigene News-Übersicht mehr – die drei neuesten Beiträge
+            stehen auf der Startseite, dorthin führt der Verweis zurück.
+          */}
           <Link
-            href="/news"
+            href="/"
             className="mb-6 inline-flex items-center gap-1 font-display text-sm tracking-wide text-white/70 uppercase hover:text-white"
           >
-            <span aria-hidden="true">←</span> Alle News
+            <span aria-hidden="true">←</span> Zur Startseite
           </Link>
           <h1 className="text-4xl sm:text-5xl">{post.titel}</h1>
           <p className="mt-4 flex flex-wrap items-center gap-x-3 gap-y-1 text-sm text-white/70">
