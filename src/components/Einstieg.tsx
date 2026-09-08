@@ -46,22 +46,22 @@ export function TeamFinder({ teams }: { teams: Team[] }) {
   })
 
   return (
-    <section className="inhalt py-14 sm:py-16">
-      <div className="mb-8 max-w-3xl">
-        <h2 className="abschnittstitel text-4xl text-nacht sm:text-5xl">Wo passt du hin?</h2>
-        <p className="mt-3 text-lg leading-relaxed text-grau">
+    <section className="inhalt py-8 sm:py-10">
+      <div className="mb-5 max-w-3xl">
+        <h2 className="abschnittstitel text-3xl text-nacht sm:text-4xl">Wo passt du hin?</h2>
+        <p className="mt-2 text-base leading-relaxed text-grau">
           Vom ersten Schritt auf dem Eis bis zur Meisterschaft – bei uns spielen Kinder ab vier
           Jahren, Jugendliche, Frauen und Erwachsene. Wähle die passende Gruppe.
         </p>
       </div>
 
-      <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+      <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {sortiert.map((team) => {
           const alter = altersangabe(team)
           const foto = bildDaten(team.teamfoto, 'card')
           // Ohne Foto bliebe sonst eine grosse leere Fläche stehen – dann wird
           // die Kachel flach und lebt von Schrift und Farbe.
-          const hoehe = foto ? 'min-h-44 sm:min-h-52' : ''
+          const hoehe = foto ? 'min-h-32 sm:min-h-36' : ''
           const ligaZeigen =
             team.liga && team.liga.trim().toLowerCase() !== team.name.trim().toLowerCase()
 
@@ -89,13 +89,13 @@ export function TeamFinder({ teams }: { teams: Team[] }) {
                 </div>
               )}
 
-              <div className="relative p-4">
+              <div className="relative p-3">
                 {alter && (
-                  <span className="mb-1.5 block font-display text-xs tracking-[0.18em] text-rot uppercase">
+                  <span className="mb-1 block font-display text-xs tracking-[0.18em] text-rot uppercase">
                     {alter}
                   </span>
                 )}
-                <span className="block font-display text-xl leading-[0.95] tracking-wide uppercase sm:text-2xl">
+                <span className="block font-display text-lg leading-[0.95] tracking-wide uppercase sm:text-xl">
                   {team.name}
                 </span>
                 {ligaZeigen && <span className="mt-1 block text-xs text-white/60">{team.liga}</span>}
@@ -146,38 +146,38 @@ export function SoGehtLos({
     <section className="relative isolate overflow-hidden bg-nacht text-white">
       <div className="eisglanz absolute inset-0 opacity-60" />
 
-      <div className="inhalt relative grid gap-10 py-14 sm:py-16 lg:grid-cols-[1.15fr_1fr] lg:gap-14">
+      <div className="inhalt relative grid gap-8 py-8 sm:py-10 lg:grid-cols-[1.15fr_1fr] lg:gap-12">
         <div>
-          <h2 className="abschnittstitel text-4xl sm:text-5xl">So fängst du an</h2>
-          <p className="mt-3 max-w-xl text-lg text-white/75">
+          <h2 className="abschnittstitel text-3xl sm:text-4xl">So fängst du an</h2>
+          <p className="mt-2 max-w-xl text-base text-white/75">
             Noch nie auf dem Eis gestanden? Kein Problem. Bei uns beginnen Kinder und Erwachsene
             ohne Vorkenntnisse.
           </p>
 
-          <ol className="mt-8 space-y-5">
+          <ol className="mt-5 space-y-3">
             {schritte.map((schritt) => (
               <li key={schritt.nummer} className="flex gap-4">
-                <span className="knopf flex h-11 w-11 shrink-0 items-center justify-center bg-rot font-display text-2xl leading-none">
+                <span className="knopf flex h-10 w-10 shrink-0 items-center justify-center bg-rot font-display text-xl leading-none">
                   {schritt.nummer}
                 </span>
                 <div>
-                  <p className="font-display text-xl tracking-wide uppercase">{schritt.titel}</p>
-                  <p className="mt-1 text-white/70">{schritt.text}</p>
+                  <p className="font-display text-lg tracking-wide uppercase">{schritt.titel}</p>
+                  <p className="mt-0.5 text-sm text-white/70">{schritt.text}</p>
                 </div>
               </li>
             ))}
           </ol>
 
-          <div className="mt-9 flex flex-wrap gap-3">
+          <div className="mt-6 flex flex-wrap gap-3">
             <a
               href={`mailto:${email}?subject=Schnuppertraining`}
-              className="knopf bg-rot px-7 py-3.5 font-display text-lg tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
+              className="knopf bg-rot px-6 py-2.5 font-display text-base tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
             >
               Schnuppertraining anfragen
             </a>
             <Link
               href="/verein"
-              className="knopf border-2 border-white/40 px-7 py-3.5 font-display text-lg tracking-wide uppercase transition-colors hover:border-white hover:bg-white hover:text-nacht"
+              className="knopf border-2 border-white/40 px-6 py-2.5 font-display text-base tracking-wide uppercase transition-colors hover:border-white hover:bg-white hover:text-nacht"
             >
               Mitglied werden
             </Link>
@@ -185,7 +185,7 @@ export function SoGehtLos({
         </div>
 
         {/* Ort und Zeiten – die zwei Fragen, die sofort danach kommen. */}
-        <div className="bg-white/6 p-6 backdrop-blur-sm sm:p-8">
+        <div className="bg-white/6 p-5 backdrop-blur-sm sm:p-6">
           <h3 className="font-display text-2xl tracking-wide uppercase">Wo wir spielen</h3>
           <p className="mt-2 text-white/75">
             Kunsteisbahn Weyermannshaus
@@ -203,7 +203,7 @@ export function SoGehtLos({
 
           {zeiten.length > 0 && (
             <>
-              <div className="trikotband-schmal my-6" />
+              <div className="trikotband-schmal my-4" />
               <h3 className="font-display text-2xl tracking-wide uppercase">
                 Training Hockeyschule
               </h3>

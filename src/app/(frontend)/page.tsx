@@ -73,7 +73,7 @@ function ResultatKachel({ team, spiel }: { team: Team; spiel: SihfSpiel }) {
   return (
     <Link
       href={`/teams/${team.slug}`}
-      className="relative flex items-center gap-4 bg-white/5 px-4 py-4 transition-colors hover:bg-white/12"
+      className="relative flex items-center gap-4 bg-white/5 px-4 py-2.5 transition-colors hover:bg-white/12"
     >
       <span className={`absolute inset-y-0 left-0 w-1.5 ${streifen}`} />
       <div className="min-w-0 flex-1">
@@ -99,7 +99,10 @@ function ResultatKachel({ team, spiel }: { team: Team; spiel: SihfSpiel }) {
 export default async function Startseite() {
   const [einstellungen, posts, sponsoren, teams, stimmungsbild] = await Promise.all([
     holeEinstellungen(),
-    holePosts({ limit: 7 }),
+    // Nur die neuesten Beiträge – die Startseite soll zeigen, was gerade
+    // passiert, nicht ein vollständiges Archiv. Ältere Beiträge stehen unter
+    // /news.
+    holePosts({ limit: 3 }),
     holeSponsoren(),
     holeTeams(),
     holeStimmungsbild(),
@@ -148,39 +151,39 @@ export default async function Startseite() {
         <div className="eisglanz absolute inset-0 opacity-70" />
 
         <div
-          className={`inhalt relative grid gap-8 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-12 ${
+          className={`inhalt relative grid gap-6 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-10 ${
             // Ohne Hintergrundfoto wirkt viel Höhe wie eine leere Fläche.
-            hero ? 'py-12 sm:py-16' : 'py-9 sm:py-12'
+            hero ? 'py-7 sm:py-10' : 'py-5 sm:py-7'
           }`}
         >
-          <Logo logo={einstellungen.logo} className="h-28 w-auto drop-shadow-2xl sm:h-40 lg:h-52" />
+          <Logo logo={einstellungen.logo} className="h-20 w-auto drop-shadow-2xl sm:h-28 lg:h-32" />
 
           <div>
-            <p className="mb-3 flex flex-wrap items-center gap-2 font-display text-sm tracking-[0.28em] uppercase">
+            <p className="mb-2 flex flex-wrap items-center gap-2 font-display text-sm tracking-[0.28em] uppercase">
               <span className="bg-rot px-2 py-0.5">Seit 1942</span>
               <span className="text-white/70">Eishockey in Bern-Bümpliz</span>
             </p>
-            <h1 className="text-5xl leading-[0.85] sm:text-7xl lg:text-8xl">
+            <h1 className="text-4xl leading-[0.85] sm:text-6xl lg:text-7xl">
               Rot-Blau
               <span className="mt-1 block text-rot">Bern-Bümpliz</span>
             </h1>
 
             {/* Ein Satz, der auch ohne Vorwissen erklärt, worum es geht. */}
-            <p className="mt-5 max-w-2xl text-lg leading-relaxed text-white/85 sm:text-xl">
+            <p className="mt-3 max-w-2xl text-base leading-relaxed text-white/85 sm:text-lg">
               {einstellungen.claim ??
                 'Unser Verein bringt Kinder ab vier Jahren aufs Eis und begleitet sie bis in die Aktivmannschaft. Mitmachen kann jede und jeder – Vorkenntnisse braucht es keine.'}
             </p>
 
-            <div className="mt-8 flex flex-wrap gap-3">
+            <div className="mt-5 flex flex-wrap gap-3">
               <a
                 href="#einstieg"
-                className="knopf bg-rot px-7 py-3.5 font-display text-xl tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
+                className="knopf bg-rot px-6 py-2.5 font-display text-lg tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
               >
                 Eishockey ausprobieren
               </a>
               <Link
                 href="/teams"
-                className="knopf border-2 border-white/45 px-7 py-3.5 font-display text-xl tracking-wide uppercase transition-colors hover:border-white hover:bg-white hover:text-nacht"
+                className="knopf border-2 border-white/45 px-6 py-2.5 font-display text-lg tracking-wide uppercase transition-colors hover:border-white hover:bg-white hover:text-nacht"
               >
                 Teams und Spielplan
               </Link>
@@ -192,8 +195,8 @@ export default async function Startseite() {
         {resultate.length > 0 && (
           <div className="relative border-t border-white/12 bg-black/35">
             <div className="inhalt">
-              <div className="flex flex-wrap items-baseline justify-between gap-2 pt-5 pb-3">
-                <h2 className="abschnittstitel flex flex-wrap items-baseline gap-3 text-3xl">
+              <div className="flex flex-wrap items-baseline justify-between gap-2 pt-3 pb-2">
+                <h2 className="abschnittstitel flex flex-wrap items-baseline gap-3 text-2xl">
                   Letzte Resultate
                   {istVorsaison && (
                     <span className="font-sans text-xs font-semibold tracking-[0.18em] text-white/45 normal-case">
@@ -205,7 +208,7 @@ export default async function Startseite() {
                   automatisch von Swiss Ice Hockey
                 </span>
               </div>
-              <div className="grid gap-px bg-white/10 pb-6 sm:grid-cols-2 lg:grid-cols-4">
+              <div className="grid gap-px bg-white/10 pb-4 sm:grid-cols-2 lg:grid-cols-4">
                 {resultate.map((eintrag) => (
                   <ResultatKachel key={eintrag.team.id} {...eintrag} />
                 ))}
@@ -227,9 +230,9 @@ export default async function Startseite() {
 
       {/* Nächstes Spiel und letztes Resultat gross nebeneinander */}
       {(naechste || resultate[0]) && (
-        <section className="inhalt py-14">
-          <h2 className="abschnittstitel mb-6 text-4xl text-nacht sm:text-6xl">Spielbetrieb</h2>
-          <div className="grid gap-6 lg:grid-cols-2">
+        <section className="inhalt py-8">
+          <h2 className="abschnittstitel mb-4 text-3xl text-nacht sm:text-4xl">Spielbetrieb</h2>
+          <div className="grid gap-5 lg:grid-cols-2">
             {naechste ? (
               <NaechstesSpiel
                 spiel={naechste.spiel}
@@ -237,15 +240,15 @@ export default async function Startseite() {
                 teamName={naechste.team.name}
               />
             ) : (
-              <div className="kachel eisglanz flex flex-col justify-center bg-blau px-8 py-10 text-white shadow-2xl">
-                <span className="etikett mb-3 w-fit bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
+              <div className="kachel eisglanz flex flex-col justify-center bg-blau px-6 py-6 text-white shadow-2xl">
+                <span className="etikett mb-2 w-fit bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
                   Nächstes Spiel
                 </span>
-                <p className="font-display text-3xl leading-[0.9] uppercase sm:text-4xl">
+                <p className="font-display text-2xl leading-[0.9] uppercase sm:text-3xl">
                   Der Spielplan der neuen Saison
                   <span className="mt-1 block text-white/70">folgt in Kürze</span>
                 </p>
-                <p className="mt-4 text-sm text-white/70">
+                <p className="mt-3 text-sm text-white/70">
                   Sobald Swiss Ice Hockey die Ansetzungen veröffentlicht, erscheinen sie hier
                   automatisch.
                 </p>
@@ -264,7 +267,7 @@ export default async function Startseite() {
 
       {/* Foto-Band mit Slogan – nur sinnvoll, wenn es ein Foto dafür gibt. */}
       {bildDaten(bandFoto, 'hero') && (
-        <section className="relative isolate flex min-h-80 items-center overflow-hidden bg-nacht text-white sm:min-h-96">
+        <section className="relative isolate flex min-h-52 items-center overflow-hidden bg-nacht text-white sm:min-h-64">
           <Bild
             bild={bandFoto}
             groesse="hero"
@@ -272,12 +275,12 @@ export default async function Startseite() {
             sizes="100vw"
           />
           <div className="absolute inset-0 bg-gradient-to-t from-nacht-tief via-nacht-tief/55 to-nacht-tief/25" />
-          <div className="inhalt relative py-12 text-center">
-            <p className="font-display text-5xl leading-[0.85] uppercase sm:text-7xl lg:text-8xl">
+          <div className="inhalt relative py-7 text-center">
+            <p className="font-display text-4xl leading-[0.85] uppercase sm:text-5xl lg:text-6xl">
               Einer für alle
               <span className="mt-1 block text-rot">Alle für einen</span>
             </p>
-            <p className="mx-auto mt-5 max-w-2xl text-white/80 sm:text-lg">
+            <p className="mx-auto mt-3 max-w-2xl text-white/80 sm:text-lg">
               Seit 1942 Eishockey im Westen von Bern.
             </p>
           </div>
@@ -286,11 +289,11 @@ export default async function Startseite() {
       )}
 
       {/* News und Sponsoren */}
-      <section className="inhalt py-14">
-        <div className="grid gap-10 lg:grid-cols-[2fr_1fr]">
+      <section className="inhalt py-8">
+        <div className="grid gap-8 lg:grid-cols-[2fr_1fr]">
           <div>
-            <div className="mb-6 flex items-baseline justify-between gap-4">
-              <h2 className="abschnittstitel text-4xl text-nacht sm:text-6xl">News</h2>
+            <div className="mb-4 flex items-baseline justify-between gap-4">
+              <h2 className="abschnittstitel text-3xl text-nacht sm:text-4xl">News</h2>
               <Link
                 href="/news"
                 className="font-display text-base tracking-wide text-rot-dunkel uppercase hover:underline"
@@ -317,7 +320,7 @@ export default async function Startseite() {
             )}
           </div>
 
-          <aside className="space-y-6 lg:sticky lg:top-32 lg:self-start">
+          <aside className="space-y-6 lg:sticky lg:top-24 lg:self-start">
             <SponsorenWidget sponsoren={sponsoren} />
           </aside>
         </div>
@@ -325,9 +328,9 @@ export default async function Startseite() {
 
       {/* Tabelle */}
       {tabellenTeam && (
-        <section className="inhalt pb-16">
-          <div className="mb-6 flex flex-wrap items-baseline justify-between gap-3">
-            <h2 className="abschnittstitel text-4xl text-nacht sm:text-6xl">Tabelle</h2>
+        <section className="inhalt pb-10">
+          <div className="mb-4 flex flex-wrap items-baseline justify-between gap-3">
+            <h2 className="abschnittstitel text-3xl text-nacht sm:text-4xl">Tabelle</h2>
             <Link
               href={`/teams/${tabellenTeam.team.slug}`}
               className="font-display text-base tracking-wide text-rot-dunkel uppercase hover:underline"
