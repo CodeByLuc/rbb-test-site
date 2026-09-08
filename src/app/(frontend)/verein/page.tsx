@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 
 import { Bild } from '../../../components/Bild'
 import { Fliesstext } from '../../../components/Fliesstext'
-import { Seitenkopf } from '../../../components/Seitenkopf'
 import { holeGlobal } from '../../../lib/daten'
 
 export const revalidate = 3600
@@ -27,14 +26,7 @@ export default async function VereinSeite() {
 
   return (
     <>
-      <Seitenkopf
-        titel="Verein"
-        untertitel={
-          verein.gruendungsjahr
-            ? `Eishockey in Bern-Bümpliz seit ${verein.gruendungsjahr}.`
-            : 'Wer wir sind und wofür wir stehen.'
-        }
-      />
+      <h1 className="sr-only">Verein</h1>
 
       <div className="inhalt space-y-14 py-14">
         {verein.geschichte && (

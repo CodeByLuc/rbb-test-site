@@ -2,7 +2,6 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 
 import { Bild } from '../../../components/Bild'
-import { Seitenkopf } from '../../../components/Seitenkopf'
 import { holeTeams } from '../../../lib/daten'
 import type { Team } from '../../../payload-types'
 
@@ -58,10 +57,7 @@ export default async function TeamsSeite() {
 
   return (
     <>
-      <Seitenkopf
-        titel="Teams"
-        untertitel="Neun Mannschaften, ein Verein – vom ersten Schritt auf dem Eis bis zur Meisterschaft."
-      />
+      <h1 className="sr-only">Teams</h1>
 
       <div className="inhalt space-y-12 py-14">
         {teams.length === 0 && (

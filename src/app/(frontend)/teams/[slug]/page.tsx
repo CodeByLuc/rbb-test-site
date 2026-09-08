@@ -5,7 +5,6 @@ import { notFound } from 'next/navigation'
 import { Bild, bildDaten } from '../../../../components/Bild'
 import { Fliesstext } from '../../../../components/Fliesstext'
 import { PostKarte } from '../../../../components/PostKarte'
-import { Seitenkopf } from '../../../../components/Seitenkopf'
 import { LetztesResultat, NaechstesSpiel, SpielListe } from '../../../../components/Spiele'
 import { Tabelle } from '../../../../components/Tabelle'
 import { TeamKompakt } from '../../../../components/TeamKompakt'
@@ -75,34 +74,41 @@ export default async function TeamSeite({ params }: Props) {
 
   return (
     <>
-      <Seitenkopf
-        titel={team.name}
-        untertitel={team.kurzbeschreibung}
-        zusatz={
-          <div className="flex flex-wrap items-center gap-3 text-sm">
-            {team.liga && (
-              <span className="knopf bg-nacht px-3 py-1 font-display tracking-wide text-white uppercase">
-                {team.liga}
-              </span>
-            )}
-            {anzeige && anzeige.spiele.length > 0 && (
-              <span className="text-grau">
-                {anzeige.bilanz.siege} Siege · {anzeige.bilanz.niederlagen} Niederlagen · Tore{' '}
-                {anzeige.bilanz.tore}:{anzeige.bilanz.gegentore}
-              </span>
-            )}
-            <Link href="/teams" className="text-rot-dunkel underline hover:text-rot">
-              Alle Teams
-            </Link>
-          </div>
-        }
-      />
+      {/*
+        Kein eigener Seitenkopf-Block mehr, wie auf den anderen Unterseiten.
+        Anders als dort verrät die Navigation hier aber nicht, welches Team
+        man ansieht ("TEAMS" bleibt bei jedem Team gleich aktiv) – darum
+        bleibt der Teamname als normale, kleine Überschrift stehen, ohne
+        eigenen Hintergrund oder Kasten.
+      */}
+      <div className="inhalt pt-8">
+        <h1 className="abschnittstitel text-3xl text-nacht sm:text-4xl">{team.name}</h1>
+        {team.kurzbeschreibung && (
+          <p className="mt-2 max-w-2xl text-base text-grau">{team.kurzbeschreibung}</p>
+        )}
+        <div className="mt-3 flex flex-wrap items-center gap-3 text-sm">
+          {team.liga && (
+            <span className="knopf bg-nacht px-3 py-1 font-display tracking-wide text-white uppercase">
+              {team.liga}
+            </span>
+          )}
+          {anzeige && anzeige.spiele.length > 0 && (
+            <span className="text-grau">
+              {anzeige.bilanz.siege} Siege · {anzeige.bilanz.niederlagen} Niederlagen · Tore{' '}
+              {anzeige.bilanz.tore}:{anzeige.bilanz.gegentore}
+            </span>
+          )}
+          <Link href="/teams" className="text-rot-dunkel underline hover:text-rot">
+            Alle Teams
+          </Link>
+        </div>
+      </div>
 
       {/*
         Aufbau nach der Skizze: oben das Teamfoto gross, daneben die beiden
         Partien. Darunter links der Kader, rechts die Tabelle.
       */}
-      <div className="inhalt grid gap-6 pt-8 lg:grid-cols-[2fr_1fr] lg:gap-8">
+      <div className="inhalt grid gap-6 pt-6 lg:grid-cols-[2fr_1fr] lg:gap-8">
         {teamfoto && (
           <div className="kachel relative overflow-hidden bg-nacht shadow-xl">
             <Bild

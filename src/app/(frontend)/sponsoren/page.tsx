@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 
 import { Fliesstext } from '../../../components/Fliesstext'
-import { Seitenkopf } from '../../../components/Seitenkopf'
 import { SponsorenListe } from '../../../components/SponsorenWidget'
 import { holeEinstellungen, holeSponsoren } from '../../../lib/daten'
 
@@ -23,10 +22,7 @@ export default async function SponsorenSeite() {
 
   return (
     <>
-      <Seitenkopf
-        titel="Sponsoren"
-        untertitel="Ohne unsere Partner gäbe es kein Eishockey in Bümpliz. Herzlichen Dank."
-      />
+      <h1 className="sr-only">Sponsoren</h1>
 
       <div className="inhalt grid gap-10 py-14 lg:grid-cols-[2fr_1fr]">
         <div>

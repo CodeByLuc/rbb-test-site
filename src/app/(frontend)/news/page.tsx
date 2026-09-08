@@ -1,7 +1,6 @@
 import type { Metadata } from 'next'
 
 import { PostKarte } from '../../../components/PostKarte'
-import { Seitenkopf } from '../../../components/Seitenkopf'
 import { holePosts } from '../../../lib/daten'
 
 export const revalidate = 300
@@ -16,10 +15,12 @@ export default async function NewsSeite() {
 
   return (
     <>
-      <Seitenkopf
-        titel="News"
-        untertitel="Spielberichte, Wochenresultate und Mitteilungen aus dem Verein."
-      />
+      {/*
+        Kein sichtbarer Seitentitel mehr – die Navigation zeigt bereits, dass
+        man auf «News» ist. Ein unsichtbares h1 bleibt für Screenreader und
+        Suchmaschinen bestehen, die pro Seite eine Hauptüberschrift erwarten.
+      */}
+      <h1 className="sr-only">News</h1>
 
       <div className="inhalt py-14">
         {posts.length === 0 ? (
