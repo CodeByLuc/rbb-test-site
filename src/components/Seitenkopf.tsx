@@ -36,7 +36,13 @@ export function Seitenkopf({
         {zusatz && <div className="mt-6">{zusatz}</div>}
       </div>
 
-      <div className="trikotband" />
+      {/*
+        Früher stand hier die 8px hohe Trikotband-Leiste (Rot/Weiss/Blau/Weiss)
+        – auf jeder Unterseite, deutlich sichtbar direkt unter dem Titel.
+        Wirkte zu wuchtig; eine schlichte Kante trennt Kopf und Inhalt ebenso
+        klar, ohne die Aufmerksamkeit auf sich zu ziehen.
+      */}
+      <div className="border-b border-white/10" />
     </section>
   )
 }
