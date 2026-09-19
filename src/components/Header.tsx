@@ -46,7 +46,7 @@ export function Header({ logoUrl, teams }: HeaderProps) {
             <img
               src={logoUrl}
               alt="EHC Rot-Blau Bern-Bümpliz"
-              className="h-16 w-auto max-w-none shrink-0 sm:h-20"
+              className="h-24 w-auto max-w-none shrink-0 sm:h-32"
             />
           ) : (
             <WappenSvg className="h-16 w-auto max-w-none shrink-0 sm:h-20" />
