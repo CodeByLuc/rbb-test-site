@@ -10,7 +10,7 @@
           "src/app/(frontend)/styles.css"
         ],
         "createdAt": "2026-09-08T20:53:40.916Z",
-        "reason": "blockquote-Zitatformatierung in redaktionellem Fliesstext, kein Karten-Element -- farbiger linker Rand ist typografische Konvention fuer Zitate, nicht das UI-Karten-Randmuster, das die Regel eigentlich erkennen soll"
+        "reason": "blockquote-Zitatformatierung, kein Karten-Akzent; linker Rand ist Standardkonvention fuer Zitate, Farbe bewusst Vereinsrot passend zum Rot-Blau-Farbkonzept der Seite"
       }
     ]
   }
