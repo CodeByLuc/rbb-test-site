@@ -26,8 +26,12 @@ export const revalidate = 60
 type TeamPlan = { team: Team; plan: TeamSpielplan }
 
 /**
- * Spielpläne aller angebundenen Teams. Hat die neue Saison noch keine Spiele
- * (Sommerpause), wird auf die letzte zurückgegriffen.
+ * Spielpläne aller angebundenen Teams. Hat ein Team in der neuen Saison noch
+ * keine Spiele (Sommerpause oder Saisonstart steht erst bevor), wird für
+ * genau dieses Team auf die letzte Saison zurückgegriffen – unabhängig davon,
+ * ob andere Teams schon Spiele haben. Sonst würde z. B. die 1. Mannschaft
+ * beim eigenen Saisonstart alle Nachwuchsteams von der Startseite verdrängen,
+ * die noch nicht gestartet sind.
  */
 async function alleSpielplaene(
   teams: Team[],
@@ -35,26 +39,29 @@ async function alleSpielplaene(
   const angebunden = teams.filter(
     (team) => team.sihfLeagueId && (team.sihfTeamId || team.sihfTeamName),
   )
-
-  const holen = (saison?: string) =>
-    Promise.all(
-      angebunden.map(async (team) => ({
-        team,
-        plan: await holeTeamSpielplan({
-          ligaId: team.sihfLeagueId,
-          teamId: team.sihfTeamId,
-          teamName: team.sihfTeamName,
-          saison,
-        }),
-      })),
-    )
-
-  const aktuell = (await holen()).filter((eintrag) => eintrag.plan.spiele.length > 0)
-  if (aktuell.length > 0) return { plaene: aktuell, istVorsaison: false }
-
   const vorsaison = String(Number(saisonAlias()) - 1)
-  const alt = (await holen(vorsaison)).filter((eintrag) => eintrag.plan.spiele.length > 0)
-  return { plaene: alt, istVorsaison: alt.length > 0 }
+
+  const plaene = await Promise.all(
+    angebunden.map(async (team) => {
+      const opts = {
+        ligaId: team.sihfLeagueId,
+        teamId: team.sihfTeamId,
+        teamName: team.sihfTeamName,
+      }
+      const aktuell = await holeTeamSpielplan(opts)
+      if (aktuell.spiele.length > 0) return { team, plan: aktuell, istVorsaison: false }
+
+      const alt = await holeTeamSpielplan({ ...opts, saison: vorsaison })
+      return { team, plan: alt, istVorsaison: alt.spiele.length > 0 }
+    }),
+  )
+
+  const mitSpielen = plaene.filter((eintrag) => eintrag.plan.spiele.length > 0)
+  // Eine gemischte Anzeige (manche Teams aktuell, andere Vorsaison) ist normal
+  // beim Saisonstart – der Hinweistext zeigt sich darum nur, wenn ALLE
+  // sichtbaren Teams noch in der Vorsaison stecken.
+  const istVorsaison = mitSpielen.length > 0 && mitSpielen.every((e) => e.istVorsaison)
+  return { plaene: mitSpielen, istVorsaison }
 }
 
 /** Ein Resultat als schmale Zeile im Resultate-Feed. */
