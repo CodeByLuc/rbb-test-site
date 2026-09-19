@@ -20,8 +20,8 @@ import {
 } from '../../lib/sihf'
 import type { Team } from '../../payload-types'
 
-// Die Startseite wird stündlich neu gebaut, damit Resultate von selbst aktuell sind.
-export const revalidate = 3600
+// Die Startseite wird häufig neu gebaut für aktuelle Logo/Sponsor-Änderungen
+export const revalidate = 60
 
 type TeamPlan = { team: Team; plan: TeamSpielplan }
 
