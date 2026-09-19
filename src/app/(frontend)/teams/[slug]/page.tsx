@@ -11,7 +11,7 @@ import { TeamKompakt } from '../../../../components/TeamKompakt'
 import { holePosts, holeTeam, holeTeams } from '../../../../lib/daten'
 import { holeTeamSpielplan, saisonAlias } from '../../../../lib/sihf'
 
-export const revalidate = 3600
+export const revalidate = 300
 
 type Props = { params: Promise<{ slug: string }> }
 

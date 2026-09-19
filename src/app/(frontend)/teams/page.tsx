@@ -5,7 +5,7 @@ import { Bild } from '../../../components/Bild'
 import { holeTeams } from '../../../lib/daten'
 import type { Team } from '../../../payload-types'
 
-export const revalidate = 3600
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Teams',

@@ -4,7 +4,7 @@ import { Fliesstext } from '../../../components/Fliesstext'
 import { SponsorenListe } from '../../../components/SponsorenWidget'
 import { holeEinstellungen, holeSponsoren } from '../../../lib/daten'
 
-export const revalidate = 3600
+export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Sponsoren',
