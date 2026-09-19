@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
-import { WappenSvg } from './Logo'
+// SVG-Fallback entfernt — nur Bild wird angezeigt
 
 export type NavTeam = { name: string; slug: string; liga?: string | null }
 
