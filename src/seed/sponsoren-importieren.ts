@@ -39,7 +39,7 @@ const SPONSOREN: SponsorEintrag[] = [
   { name: 'rubmedia', datei: 'rbb1789852981867-rubmedia.svg', kategorie: 'sponsor' },
   { name: 'Trattoria Bella Italia', datei: 'rbb1789852981867-trattoria.png', kategorie: 'sponsor' },
   { name: 'Jäger Bethlehem', datei: 'rbb1789852981867-jaeger-bethlehem.gif', kategorie: 'sponsor' },
-  { name: 'Stiftung Freude herrscht', datei: 'rbb1789852981867-stiftung-freude-herrscht.jpg', kategorie: 'goenner' },
+  { name: 'Stiftung Freude herrscht', datei: 'rbb1789852981867-stiftung-freude-herrscht.jpg', kategorie: 'sponsor' },
 ]
 
 /*

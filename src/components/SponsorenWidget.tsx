@@ -6,7 +6,6 @@ import { bildDaten } from './Bild'
 const kategorieTitel: Record<string, string> = {
   hauptsponsor: 'Hauptsponsoren',
   sponsor: 'Sponsoren',
-  goenner: 'Gönner',
 }
 
 function SponsorKachel({ sponsor, gross }: { sponsor: Sponsoren; gross?: boolean }) {
@@ -99,40 +98,35 @@ export function SponsorenWidget({ sponsoren }: { sponsoren: Sponsoren[] }) {
 
 /** Vollständige Auflistung nach Kategorie für die Sponsorenseite. */
 export function SponsorenListe({ sponsoren }: { sponsoren: Sponsoren[] }) {
-  const gruppen = (['hauptsponsor', 'sponsor', 'goenner'] as const)
-    .map((kategorie) => ({
-      kategorie,
-      titel: kategorieTitel[kategorie],
-      eintraege: sponsoren.filter((s) => s.kategorie === kategorie),
-    }))
-    .filter((gruppe) => gruppe.eintraege.length > 0)
+  const hauptsponsoren = sponsoren.filter((s) => s.kategorie === 'hauptsponsor')
+  const weitere = sponsoren.filter((s) => s.kategorie === 'sponsor' || s.kategorie === 'goenner')
 
-  if (gruppen.length === 0) {
+  if (hauptsponsoren.length === 0 && weitere.length === 0) {
     return <p className="text-grau">Die Sponsoren werden bald hier erscheinen.</p>
   }
 
   return (
     <div className="space-y-10">
-      {gruppen.map((gruppe) => (
-        <section key={gruppe.kategorie}>
-          <h2 className="abschnittstitel mb-4 text-3xl text-nacht">{gruppe.titel}</h2>
-          <div
-            className={`grid gap-px bg-linie p-px ${
-              gruppe.kategorie === 'hauptsponsor'
-                ? 'grid-cols-1 sm:grid-cols-2'
-                : 'grid-cols-2 sm:grid-cols-3 lg:grid-cols-4'
-            }`}
-          >
-            {gruppe.eintraege.map((sponsor) => (
-              <SponsorKachel
-                key={sponsor.id}
-                sponsor={sponsor}
-                gross={gruppe.kategorie === 'hauptsponsor'}
-              />
+      {hauptsponsoren.length > 0 && (
+        <section>
+          <h2 className="abschnittstitel mb-4 text-3xl text-nacht">Hauptsponsoren</h2>
+          <div className="grid gap-px bg-linie p-px grid-cols-1 sm:grid-cols-2">
+            {hauptsponsoren.map((sponsor) => (
+              <SponsorKachel key={sponsor.id} sponsor={sponsor} gross />
             ))}
           </div>
         </section>
-      ))}
+      )}
+      {weitere.length > 0 && (
+        <section>
+          <h2 className="abschnittstitel mb-4 text-3xl text-nacht">Sponsoren</h2>
+          <div className="grid gap-px bg-linie p-px grid-cols-2 sm:grid-cols-3 lg:grid-cols-4">
+            {weitere.map((sponsor) => (
+              <SponsorKachel key={sponsor.id} sponsor={sponsor} />
+            ))}
+          </div>
+        </section>
+      )}
     </div>
   )
 }
