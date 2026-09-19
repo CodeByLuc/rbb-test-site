@@ -137,7 +137,7 @@ export default async function Startseite() {
             hero ? 'py-7 sm:py-10' : 'py-5 sm:py-7'
           }`}
         >
-          <Logo logo={einstellungen.logo} className="h-20 w-auto drop-shadow-2xl sm:h-28 lg:h-32" />
+          <Logo logo={einstellungen.logo} className="h-28 w-auto drop-shadow-2xl sm:h-36 lg:h-44" />
 
           <div>
             <p className="mb-2 flex flex-wrap items-center gap-2 font-display text-sm tracking-[0.28em] uppercase">
