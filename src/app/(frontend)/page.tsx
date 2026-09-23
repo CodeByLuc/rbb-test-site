@@ -1,7 +1,6 @@
 import Link from 'next/link'
 
 import { Bild, bildDaten } from '../../components/Bild'
-import { Logo } from '../../components/Logo'
 import { PostKarte } from '../../components/PostKarte'
 import { SponsorenWidget } from '../../components/SponsorenWidget'
 import {
@@ -139,13 +138,11 @@ export default async function Startseite() {
         <div className="eisglanz absolute inset-0 opacity-70" />
 
         <div
-          className={`inhalt relative grid gap-6 lg:grid-cols-[auto_1fr] lg:items-center lg:gap-10 ${
+          className={`inhalt relative ${
             // Ohne Hintergrundfoto wirkt viel Höhe wie eine leere Fläche.
             hero ? 'py-7 sm:py-10' : 'py-5 sm:py-7'
           }`}
         >
-          <Logo logo={einstellungen.logo} className="h-28 w-auto drop-shadow-2xl sm:h-36 lg:h-44" />
-
           <div>
             <p className="mb-2 flex flex-wrap items-center gap-2 font-display text-sm tracking-[0.28em] uppercase">
               <span className="bg-rot px-2 py-0.5">Seit 1942</span>

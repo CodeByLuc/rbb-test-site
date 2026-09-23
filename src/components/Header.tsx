@@ -4,7 +4,7 @@ import Link from 'next/link'
 import { usePathname } from 'next/navigation'
 import { useState } from 'react'
 
-// SVG-Fallback entfernt — nur Bild wird angezeigt
+import { WappenSvg } from './Logo'
 
 export type NavTeam = { name: string; slug: string; liga?: string | null }
 
@@ -41,12 +41,16 @@ export function Header({ logoUrl, teams }: HeaderProps) {
             auf den Link bezieht, dessen Breite wiederum vom Bild abhängt. Der
             Browser löst diesen Zirkel mit Breite 0 auf – das Logo verschwindet.
           */}
-          {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img
-            src={logoUrl || '/api/media/file/ehc-wappen-578488169.png'}
-            alt="EHC Rot-Blau Bern-Bümpliz"
-            className="h-24 w-auto max-w-none shrink-0 sm:h-32"
-          />
+          {logoUrl ? (
+            // eslint-disable-next-line @next/next/no-img-element
+            <img
+              src={logoUrl}
+              alt="EHC Rot-Blau Bern-Bümpliz"
+              className="h-14 w-auto max-w-none shrink-0 sm:h-16"
+            />
+          ) : (
+            <WappenSvg className="h-14 w-auto max-w-none shrink-0 sm:h-16" />
+          )}
         </Link>
 
         <nav className="hidden items-stretch lg:flex" aria-label="Hauptnavigation">
