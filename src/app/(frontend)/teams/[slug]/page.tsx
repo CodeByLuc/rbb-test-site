@@ -8,7 +8,7 @@ import { PostKarte } from '../../../../components/PostKarte'
 import { LetztesResultat, NaechstesSpiel, SpielListe } from '../../../../components/Spiele'
 import { Tabelle } from '../../../../components/Tabelle'
 import { TeamKompakt } from '../../../../components/TeamKompakt'
-import { holePosts, holeTeam, holeTeams } from '../../../../lib/daten'
+import { holePosts, holeTeam, holeTeams, holeTeamSpielplanMitFallback } from '../../../../lib/daten'
 import { holeTeamSpielplan, saisonAlias } from '../../../../lib/sihf'
 
 export const revalidate = 300
@@ -44,11 +44,7 @@ export default async function TeamSeite({ params }: Props) {
   if (!team) notFound()
 
   const [plan, posts] = await Promise.all([
-    holeTeamSpielplan({
-      ligaId: team.sihfLeagueId,
-      teamId: team.sihfTeamId,
-      teamName: team.sihfTeamName,
-    }),
+    holeTeamSpielplanMitFallback(team),
     holePosts({ limit: 3, teamId: team.id }),
   ])
 

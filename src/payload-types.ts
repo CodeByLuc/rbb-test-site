@@ -331,6 +331,27 @@ export interface Team {
    */
   tabellenUrl?: string | null;
   /**
+   * Nur nötig, solange die SIHF-Statistik-API für diese Liga noch keine Daten liefert (z. B. ganz zu Saisonbeginn). Sobald die automatische Abfrage oben Spiele findet, hat sie Vorrang – diese Liste wird dann ignoriert.
+   */
+  manuelleSpiele?:
+    | {
+        datum: string;
+        zeit?: string | null;
+        heim: string;
+        gast: string;
+        /**
+         * Leer lassen, solange ungespielt.
+         */
+        toreHeim?: number | null;
+        /**
+         * Leer lassen, solange ungespielt.
+         */
+        toreGast?: number | null;
+        wettbewerb?: string | null;
+        id?: string | null;
+      }[]
+    | null;
+  /**
    * Entsteht automatisch aus dem Namen.
    */
   slug?: string | null;
@@ -572,6 +593,18 @@ export interface TeamsSelect<T extends boolean = true> {
   sihfTeamId?: T;
   sihfLeagueId?: T;
   tabellenUrl?: T;
+  manuelleSpiele?:
+    | T
+    | {
+        datum?: T;
+        zeit?: T;
+        heim?: T;
+        gast?: T;
+        toreHeim?: T;
+        toreGast?: T;
+        wettbewerb?: T;
+        id?: T;
+      };
   slug?: T;
   updatedAt?: T;
   createdAt?: T;

@@ -48,6 +48,13 @@ export type SihfSpiel = {
   status: string
   drittelHeim: string[]
   drittelGast: string[]
+  /**
+   * Ob das Spiel zur Meisterschaftstabelle zählt. `undefined` heisst "ja" –
+   * die Live-Abfrage liefert ohnehin nur die Meisterschaftsspiele der
+   * gewählten Liga. Bei von Hand erfassten Spielen kann es auch
+   * Testspiele/Freundschaftsspiele geben, die keinen Tabellenplatz vergeben.
+   */
+  zaehltZurTabelle?: boolean
 }
 
 /**
@@ -188,33 +195,28 @@ export type TeamSpielplan = {
   tabelle: TabellenZeile[]
 }
 
-/** Holt den Spielplan eines einzelnen Teams inklusive letztem Resultat und Bilanz. */
-export async function holeTeamSpielplan(opts: {
-  ligaId?: string | number | null
-  teamId?: string | number | null
-  teamName?: string | null
-  saison?: string
-  revalidate?: number
-}): Promise<TeamSpielplan> {
-  const leer: TeamSpielplan = {
-    spiele: [],
-    letztes: null,
-    naechste: [],
-    bilanz: { siege: 0, niederlagen: 0, tore: 0, gegentore: 0 },
-    tabelle: [],
-  }
+const leererSpielplan: TeamSpielplan = {
+  spiele: [],
+  letztes: null,
+  naechste: [],
+  bilanz: { siege: 0, niederlagen: 0, tore: 0, gegentore: 0 },
+  tabelle: [],
+}
 
-  if (!opts.ligaId) return leer
-  if (!opts.teamId && !opts.teamName) return leer
-
-  const alle = await holeLigaSpiele({
-    ligaId: opts.ligaId,
-    saison: opts.saison,
-    revalidate: opts.revalidate,
-  })
-
+/**
+ * Baut aus einer Liste von Ligaspielen den Spielplan eines einzelnen Teams:
+ * eigene Spiele, letztes Resultat, nächste Termine, Bilanz und Gruppentabelle.
+ *
+ * Von `holeTeamSpielplan` (live von der SIHF) genauso genutzt wie von der
+ * manuellen Erfassung in `lib/daten.ts` (wenn die SIHF-Statistik-API für eine
+ * Liga noch keine Daten führt) – beide liefern am Ende dieselbe Form.
+ */
+export function baueSpielplan(
+  alle: SihfSpiel[],
+  eigenes: { teamId?: string | number | null; teamName?: string | null },
+): TeamSpielplan {
   const spiele = alle.filter(
-    (s) => passt(s.heim, opts.teamId, opts.teamName) || passt(s.gast, opts.teamId, opts.teamName),
+    (s) => passt(s.heim, eigenes.teamId, eigenes.teamName) || passt(s.gast, eigenes.teamId, eigenes.teamName),
   )
 
   const gespielte = spiele.filter((s) => s.gespielt && !s.abgesagt)
@@ -222,7 +224,7 @@ export async function holeTeamSpielplan(opts: {
 
   const bilanz = gespielte.reduce(
     (acc, s) => {
-      const heim = passt(s.heim, opts.teamId, opts.teamName)
+      const heim = passt(s.heim, eigenes.teamId, eigenes.teamName)
       const eigene = heim ? s.toreHeim! : s.toreGast!
       const fremde = heim ? s.toreGast! : s.toreHeim!
       acc.tore += eigene
@@ -239,8 +241,77 @@ export async function holeTeamSpielplan(opts: {
     letztes: gespielte.length > 0 ? gespielte[gespielte.length - 1] : null,
     naechste: offene.slice(0, 5),
     bilanz,
-    tabelle: berechneGruppenTabelle(alle, { teamId: opts.teamId, teamName: opts.teamName }),
+    tabelle: berechneGruppenTabelle(alle, eigenes),
   }
+}
+
+const wochentage = ['So', 'Mo', 'Di', 'Mi', 'Do', 'Fr', 'Sa']
+
+export type ManuellesSpiel = {
+  datum?: string | null
+  zeit?: string | null
+  heim: string
+  gast: string
+  toreHeim?: number | null
+  toreGast?: number | null
+  wettbewerb?: string | null
+}
+
+/**
+ * Wandelt von Hand erfasste Spiele (siehe Teams-Kollektion, Feld
+ * "manuelleSpiele") in dieselbe Form um wie die SIHF-Antwort, damit
+ * `baueSpielplan` beide Quellen gleich verarbeiten kann.
+ *
+ * Diese manuelle Liste greift nur als Notlösung, solange die
+ * SIHF-Statistik-API für eine Liga (noch) keine Spiele liefert – etwa ganz zu
+ * Saisonbeginn, bevor die Amateurliga dort erfasst ist.
+ */
+export function spieleAusManuellerListe(eintraege: ManuellesSpiel[]): SihfSpiel[] {
+  return eintraege
+    .filter((e) => e.datum && e.heim && e.gast)
+    .map((e) => {
+      const d = new Date(e.datum!)
+      const gespielt = e.toreHeim != null && e.toreGast != null
+      return {
+        gameId: null,
+        wochentag: wochentage[d.getUTCDay()] ?? '',
+        datum: `${String(d.getUTCDate()).padStart(2, '0')}.${String(d.getUTCMonth() + 1).padStart(2, '0')}.${d.getUTCFullYear()}`,
+        zeit: e.zeit ?? '',
+        zeitpunkt: e.datum ?? null,
+        heim: { id: null, name: e.heim, kuerzel: null },
+        gast: { id: null, name: e.gast, kuerzel: null },
+        toreHeim: e.toreHeim ?? null,
+        toreGast: e.toreGast ?? null,
+        gespielt,
+        abgesagt: false,
+        entscheidung: '',
+        status: gespielt ? 'Ende' : '',
+        drittelHeim: [],
+        drittelGast: [],
+        zaehltZurTabelle: !/exhibition|testspiel|freundschaft/i.test(e.wettbewerb ?? ''),
+      } satisfies SihfSpiel
+    })
+    .sort((a, b) => (a.zeitpunkt ?? '').localeCompare(b.zeitpunkt ?? ''))
+}
+
+/** Holt den Spielplan eines einzelnen Teams inklusive letztem Resultat und Bilanz. */
+export async function holeTeamSpielplan(opts: {
+  ligaId?: string | number | null
+  teamId?: string | number | null
+  teamName?: string | null
+  saison?: string
+  revalidate?: number
+}): Promise<TeamSpielplan> {
+  if (!opts.ligaId) return leererSpielplan
+  if (!opts.teamId && !opts.teamName) return leererSpielplan
+
+  const alle = await holeLigaSpiele({
+    ligaId: opts.ligaId,
+    saison: opts.saison,
+    revalidate: opts.revalidate,
+  })
+
+  return baueSpielplan(alle, { teamId: opts.teamId, teamName: opts.teamName })
 }
 
 export type TabellenZeile = {
@@ -272,7 +343,9 @@ export function berechneGruppenTabelle(
   eigenes: { teamId?: string | number | null; teamName?: string | null },
 ): TabellenZeile[] {
   const eigeneSpiele = alleSpiele.filter(
-    (s) => passt(s.heim, eigenes.teamId, eigenes.teamName) || passt(s.gast, eigenes.teamId, eigenes.teamName),
+    (s) =>
+      s.zaehltZurTabelle !== false &&
+      (passt(s.heim, eigenes.teamId, eigenes.teamName) || passt(s.gast, eigenes.teamId, eigenes.teamName)),
   )
   if (eigeneSpiele.length === 0) return []
 
@@ -284,7 +357,12 @@ export function berechneGruppenTabelle(
   }
 
   const relevant = alleSpiele.filter(
-    (s) => s.gespielt && !s.abgesagt && gruppe.has(s.heim.name) && gruppe.has(s.gast.name),
+    (s) =>
+      s.gespielt &&
+      !s.abgesagt &&
+      s.zaehltZurTabelle !== false &&
+      gruppe.has(s.heim.name) &&
+      gruppe.has(s.gast.name),
   )
 
   const zeilen = new Map<string, TabellenZeile>()
@@ -307,6 +385,14 @@ export function berechneGruppenTabelle(
     }
     zeilen.set(team.name, neu)
     return neu
+  }
+
+  // Alle Gruppenteams schon vor der Auswertung eintragen – sonst verschwindet
+  // vor Saisonstart (noch kein Spiel gewertet) die ganze Tabelle, statt wie auf
+  // sihf.ch alle Teams mit null Punkten zu zeigen.
+  for (const spiel of eigeneSpiele) {
+    holen(spiel.heim)
+    holen(spiel.gast)
   }
 
   for (const spiel of relevant) {

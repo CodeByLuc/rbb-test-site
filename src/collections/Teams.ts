@@ -206,6 +206,44 @@ export const Teams: CollectionConfig = {
                 description: 'Vollständige Adresse der Ranglisten-Seite auf sihf.ch.',
               },
             },
+            {
+              name: 'manuelleSpiele',
+              type: 'array',
+              label: 'Spielplan von Hand',
+              admin: {
+                description:
+                  'Nur nötig, solange die SIHF-Statistik-API für diese Liga noch keine Daten liefert (z. B. ganz zu Saisonbeginn). Sobald die automatische Abfrage oben Spiele findet, hat sie Vorrang – diese Liste wird dann ignoriert.',
+              },
+              fields: [
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'datum', type: 'date', label: 'Datum', required: true },
+                    { name: 'zeit', type: 'text', label: 'Anstosszeit', admin: { placeholder: 'z. B. 17:00' } },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'heim', type: 'text', label: 'Heimteam', required: true },
+                    { name: 'gast', type: 'text', label: 'Gastteam', required: true },
+                  ],
+                },
+                {
+                  type: 'row',
+                  fields: [
+                    { name: 'toreHeim', type: 'number', label: 'Tore Heim', admin: { description: 'Leer lassen, solange ungespielt.' } },
+                    { name: 'toreGast', type: 'number', label: 'Tore Gast', admin: { description: 'Leer lassen, solange ungespielt.' } },
+                  ],
+                },
+                {
+                  name: 'wettbewerb',
+                  type: 'text',
+                  label: 'Wettbewerb',
+                  admin: { placeholder: 'z. B. Regular Season Gr. 2' },
+                },
+              ],
+            },
           ],
         },
       ],

@@ -10,6 +10,7 @@ import type {
   Team,
   Verein,
 } from '../payload-types'
+import { baueSpielplan, holeTeamSpielplan, spieleAusManuellerListe, type TeamSpielplan } from './sihf'
 
 export const payloadHolen = async () => getPayload({ config: await configPromise })
 
@@ -76,6 +77,32 @@ export async function holeTeam(slug: string): Promise<Team | null> {
     },
     null,
   )
+}
+
+/**
+ * Wie `holeTeamSpielplan`, greift aber auf von Hand erfasste Spiele zurück
+ * (Team-Feld "Spielplan von Hand"), sobald die SIHF-Statistik-API für die
+ * Liga eines Teams (noch) nichts liefert – z. B. kurz nach Saisonbeginn, ehe
+ * die Amateurliga dort erfasst ist. Sobald die Live-Abfrage Spiele findet,
+ * hat sie Vorrang.
+ */
+export async function holeTeamSpielplanMitFallback(
+  team: Pick<Team, 'sihfLeagueId' | 'sihfTeamId' | 'sihfTeamName' | 'manuelleSpiele'>,
+  opts?: { saison?: string; revalidate?: number },
+): Promise<TeamSpielplan> {
+  const live = await holeTeamSpielplan({
+    ligaId: team.sihfLeagueId,
+    teamId: team.sihfTeamId,
+    teamName: team.sihfTeamName,
+    saison: opts?.saison,
+    revalidate: opts?.revalidate,
+  })
+
+  if (live.spiele.length > 0) return live
+  if (!team.manuelleSpiele || team.manuelleSpiele.length === 0) return live
+
+  const manuell = spieleAusManuellerListe(team.manuelleSpiele)
+  return baueSpielplan(manuell, { teamName: team.sihfTeamName })
 }
 
 export async function holePosts(optionen?: {

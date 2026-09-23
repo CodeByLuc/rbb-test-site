@@ -9,6 +9,7 @@ import {
   holeSponsoren,
   holeStimmungsbild,
   holeTeams,
+  holeTeamSpielplanMitFallback,
 } from '../../lib/daten'
 import {
   datumAusSihf,
@@ -42,15 +43,17 @@ async function alleSpielplaene(
 
   const plaene = await Promise.all(
     angebunden.map(async (team) => {
-      const opts = {
+      // Berücksichtigt auch von Hand erfasste Spiele, falls die SIHF-Statistik
+      // für die Liga dieses Teams (noch) nichts liefert.
+      const aktuell = await holeTeamSpielplanMitFallback(team)
+      if (aktuell.spiele.length > 0) return { team, plan: aktuell, istVorsaison: false }
+
+      const alt = await holeTeamSpielplan({
         ligaId: team.sihfLeagueId,
         teamId: team.sihfTeamId,
         teamName: team.sihfTeamName,
-      }
-      const aktuell = await holeTeamSpielplan(opts)
-      if (aktuell.spiele.length > 0) return { team, plan: aktuell, istVorsaison: false }
-
-      const alt = await holeTeamSpielplan({ ...opts, saison: vorsaison })
+        saison: vorsaison,
+      })
       return { team, plan: alt, istVorsaison: alt.spiele.length > 0 }
     }),
   )
