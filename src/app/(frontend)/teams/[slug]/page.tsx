@@ -6,6 +6,7 @@ import { Bild, bildDaten } from '../../../../components/Bild'
 import { Fliesstext } from '../../../../components/Fliesstext'
 import { PostKarte } from '../../../../components/PostKarte'
 import { LetztesResultat, NaechstesSpiel, SpielListe } from '../../../../components/Spiele'
+import { SpielerFoto } from '../../../../components/SpielerFoto'
 import { Tabelle } from '../../../../components/Tabelle'
 import { TeamKompakt } from '../../../../components/TeamKompakt'
 import { holePosts, holeTeam, holeTeams, holeTeamSpielplanMitFallback } from '../../../../lib/daten'
@@ -164,11 +165,10 @@ export default async function TeamSeite({ params }: Props) {
               <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
                 {spieler.map((person, index) => (
                   <div key={person.id ?? index} className="kachel overflow-hidden bg-white shadow-sm">
-                    <Bild
+                    <SpielerFoto
                       bild={person.foto}
-                      groesse="portrait"
-                      className="aspect-[3/4] w-full object-cover"
-                      sizes="(max-width: 640px) 50vw, 16rem"
+                      name={person.name}
+                      className="aspect-square w-full object-cover"
                     />
                     <div className="p-3">
                       <p className="flex items-baseline gap-2">
