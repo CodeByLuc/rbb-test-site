@@ -145,6 +145,37 @@ export default async function TeamSeite({ params }: Props) {
 
       <div className="inhalt grid gap-10 py-10 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-10">
+          {/* Trainer & Betreuung – direkt unter dem Teamfoto, das Kader fürs
+              Gesicht nach aussen ist die Betreuung. */}
+          {trainer.length > 0 && (
+            <section>
+              <h2 className="abschnittstitel mb-5 text-4xl text-nacht">Trainer & Betreuung</h2>
+              <div className="grid grid-cols-2 gap-4 sm:grid-cols-3 lg:grid-cols-4">
+                {trainer.map((person, index) => (
+                  <div key={person.id ?? index} className="kachel overflow-hidden bg-white shadow-sm">
+                    <SpielerFoto
+                      bild={person.foto}
+                      name={person.name}
+                      className="aspect-square w-full object-cover"
+                    />
+                    <div className="p-3">
+                      <p className="font-semibold text-nacht">{person.name}</p>
+                      {person.funktion && <p className="text-xs text-grau">{person.funktion}</p>}
+                      {person.email && (
+                        <a
+                          href={`mailto:${person.email}`}
+                          className="text-xs text-rot-dunkel hover:underline"
+                        >
+                          {person.email}
+                        </a>
+                      )}
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </section>
+          )}
+
           {team.beschreibung && (
             <div className="kachel bg-white p-6 shadow-sm sm:p-8">
               <Fliesstext daten={team.beschreibung} />
@@ -252,37 +283,6 @@ export default async function TeamSeite({ params }: Props) {
             </div>
           )}
 
-          {trainer.length > 0 && (
-            <div className="kachel bg-white shadow-md">
-              <h2 className="abschnittstitel px-5 pt-5 text-2xl text-nacht">Trainer & Betreuung</h2>
-              <ul className="space-y-4 p-5">
-                {trainer.map((person, index) => (
-                  <li key={person.id ?? index} className="flex items-center gap-3">
-                    <Bild
-                      bild={person.foto}
-                      groesse="thumbnail"
-                      className="h-14 w-14 shrink-0 object-cover"
-                      sizes="56px"
-                    />
-                    <div className="min-w-0">
-                      <p className="font-display text-lg tracking-wide text-nacht uppercase">
-                        {person.name}
-                      </p>
-                      {person.funktion && <p className="text-xs text-grau">{person.funktion}</p>}
-                      {person.email && (
-                        <a
-                          href={`mailto:${person.email}`}
-                          className="text-xs text-rot-dunkel hover:underline"
-                        >
-                          {person.email}
-                        </a>
-                      )}
-                    </div>
-                  </li>
-                ))}
-              </ul>
-            </div>
-          )}
         </aside>
       </div>
     </>
