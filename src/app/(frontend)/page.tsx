@@ -13,8 +13,6 @@ import {
 } from '../../lib/daten'
 import {
   datumAusSihf,
-  holeTeamSpielplan,
-  saisonAlias,
   type SihfSpiel,
   type TeamSpielplan,
 } from '../../lib/sihf'
@@ -23,55 +21,26 @@ import type { Team } from '../../payload-types'
 // Die Startseite wird häufig neu gebaut für aktuelle Logo/Sponsor-Änderungen
 export const revalidate = 60
 
-type TeamPlan = { team: Team; plan: TeamSpielplan; istVorsaison: boolean }
+type TeamPlan = { team: Team; plan: TeamSpielplan }
 
 /**
- * Letztes Resultat jedes angebundenen Teams. Hat ein Team in der laufenden
- * Saison noch kein Spiel absolviert, greift genau für dieses Team das letzte
- * Resultat der Vorsaison – unabhängig davon, ob andere Teams schon gespielt
- * haben.
+ * Spielpläne aller angebundenen Teams der laufenden Saison. Teams ohne
+ * absolviertes Spiel erscheinen nicht – es gibt bewusst keinen Rückgriff auf
+ * die Vorsaison.
  */
-async function alleSpielplaene(
-  teams: Team[],
-): Promise<{ plaene: TeamPlan[]; istVorsaison: boolean }> {
+async function alleSpielplaene(teams: Team[]): Promise<TeamPlan[]> {
   const angebunden = teams.filter(
     (team) => team.sihfLeagueId && (team.sihfTeamId || team.sihfTeamName),
   )
-  const vorsaison = String(Number(saisonAlias()) - 1)
 
   const plaene = await Promise.all(
-    angebunden.map(async (team) => {
-      // Berücksichtigt auch die Club-Schnittstelle und von Hand erfasste Spiele.
-      const aktuell = await holeTeamSpielplanMitFallback(team)
-      if (aktuell.letztes) return { team, plan: aktuell, istVorsaison: false }
-
-      const alt = await holeTeamSpielplan({
-        ligaId: team.sihfLeagueId,
-        teamId: team.sihfTeamId,
-        teamName: team.sihfTeamName,
-        saison: vorsaison,
-      })
-      return { team, plan: alt, istVorsaison: alt.letztes !== null }
-    }),
+    angebunden.map(async (team) => ({ team, plan: await holeTeamSpielplanMitFallback(team) })),
   )
-
-  const mitResultat = plaene.filter((eintrag) => eintrag.plan.letztes)
-  // Der Hinweis «Saison …» im Balken erscheint nur, wenn ALLE gezeigten Teams
-  // noch bei der Vorsaison stehen; sonst steht «Vorsaison» an der einzelnen Kachel.
-  const istVorsaison = mitResultat.length > 0 && mitResultat.every((e) => e.istVorsaison)
-  return { plaene: mitResultat, istVorsaison }
+  return plaene.filter((eintrag) => eintrag.plan.letztes)
 }
 
 /** Ein Resultat als Kachel im roten Resultate-Balken. */
-function ResultatKachel({
-  team,
-  spiel,
-  vorsaison = false,
-}: {
-  team: Team
-  spiel: SihfSpiel
-  vorsaison?: boolean
-}) {
+function ResultatKachel({ team, spiel }: { team: Team; spiel: SihfSpiel }) {
   const eigenerName = team.sihfTeamName || 'Rot-Blau'
   const wirSindHeim = spiel.heim.name.toLowerCase().includes(eigenerName.toLowerCase())
   const eigene = wirSindHeim ? spiel.toreHeim! : spiel.toreGast!
@@ -94,7 +63,6 @@ function ResultatKachel({
             {team.name}
           </span>
           <span className="mt-1 block truncate text-xs text-white/65">
-            {vorsaison && <>Vorsaison · </>}
             {wirSindHeim ? 'gegen' : 'bei'} {gegner} · {kurzdatum}
           </span>
         </span>
@@ -129,7 +97,7 @@ export default async function Startseite() {
     holeStimmungsbild(),
   ])
 
-  const { plaene, istVorsaison } = await alleSpielplaene(teams)
+  const plaene = await alleSpielplaene(teams)
 
   // Neuestes Resultat zuerst, damit oben wirklich das letzte Spiel steht.
   const resultate = plaene
@@ -137,7 +105,6 @@ export default async function Startseite() {
     .map((eintrag) => ({
       team: eintrag.team,
       spiel: eintrag.plan.letztes!,
-      vorsaison: eintrag.istVorsaison,
     }))
     .sort((a, b) => {
       const da = datumAusSihf(a.spiel)?.getTime() ?? 0
@@ -217,19 +184,10 @@ export default async function Startseite() {
               className="shrink-0 font-display text-2xl leading-none tracking-wide uppercase"
             >
               Letzte Resultate
-              {istVorsaison && (
-                <span className="mt-1 block font-sans text-xs font-normal tracking-normal text-white/80 normal-case">
-                  Saison {Number(saisonAlias()) - 2}/{String(Number(saisonAlias()) - 1).slice(2)}
-                </span>
-              )}
             </h2>
             <ul className="grid flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]">
               {resultate.map((eintrag) => (
-                <ResultatKachel
-                  key={eintrag.team.id}
-                  {...eintrag}
-                  vorsaison={eintrag.vorsaison && !istVorsaison}
-                />
+                <ResultatKachel key={eintrag.team.id} {...eintrag} />
               ))}
             </ul>
           </div>
