@@ -898,6 +898,7 @@ export interface Verein {
   } | null;
   anmeldeformular?: (number | null) | Dokumente;
   statuten?: (number | null) | Dokumente;
+  datenschutz?: (number | null) | Dokumente;
   updatedAt?: string | null;
   createdAt?: string | null;
 }
@@ -997,6 +998,7 @@ export interface VereinSelect<T extends boolean = true> {
   mitgliedschaft?: T;
   anmeldeformular?: T;
   statuten?: T;
+  datenschutz?: T;
   updatedAt?: T;
   createdAt?: T;
   globalType?: T;

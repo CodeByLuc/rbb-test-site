@@ -22,6 +22,7 @@ export default async function VereinSeite() {
 
   const anmeldeformular = dokument(verein.anmeldeformular)
   const statuten = dokument(verein.statuten)
+  const datenschutz = dokument(verein.datenschutz)
 
   return (
     <>
@@ -62,7 +63,7 @@ export default async function VereinSeite() {
           </section>
         )}
 
-        {(verein.mitgliedschaft || anmeldeformular || statuten) && (
+        {(verein.mitgliedschaft || anmeldeformular || statuten || datenschutz) && (
           <section className="kachel bg-blau p-6 text-white shadow-sm sm:p-8">
             <h2 className="abschnittstitel mb-4 text-4xl sm:text-6xl">Mitglied werden</h2>
             {verein.mitgliedschaft && (
@@ -89,6 +90,16 @@ export default async function VereinSeite() {
                   className="knopf border border-white/40 px-5 py-3 font-display text-sm tracking-wide uppercase hover:border-white hover:bg-white/10"
                 >
                   Statuten
+                </a>
+              )}
+              {datenschutz?.url && (
+                <a
+                  href={datenschutz.url}
+                  target="_blank"
+                  rel="noopener noreferrer"
+                  className="knopf border border-white/40 px-5 py-3 font-display text-sm tracking-wide uppercase hover:border-white hover:bg-white/10"
+                >
+                  Datenschutzerklärung
                 </a>
               )}
             </div>

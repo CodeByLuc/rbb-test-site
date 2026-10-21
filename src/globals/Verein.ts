@@ -97,6 +97,12 @@ export const Verein: GlobalConfig = {
               relationTo: 'dokumente',
               label: 'Statuten (PDF)',
             },
+            {
+              name: 'datenschutz',
+              type: 'upload',
+              relationTo: 'dokumente',
+              label: 'Datenschutzerklärung (PDF)',
+            },
           ],
         },
       ],
