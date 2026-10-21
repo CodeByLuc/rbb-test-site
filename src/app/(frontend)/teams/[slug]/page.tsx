@@ -148,7 +148,7 @@ export default async function TeamSeite({ params }: Props) {
         waren sie zu eng zum Lesen. Auf dem Telefon steht oben die Kurzübersicht.
       */}
       {team.sihfLeagueId && anzeige && (
-        <div className="inhalt hidden gap-6 pt-8 lg:grid xl:grid-cols-[3fr_2fr] xl:items-start">
+        <div className="inhalt hidden gap-6 pt-8 lg:grid xl:grid-cols-[11fr_9fr] xl:items-start">
           {istVorsaison && (
             <p className="kachel bg-white px-5 py-3 text-sm text-nacht shadow-sm xl:col-span-2">
               <strong>Hinweis:</strong> Für die neue Saison sind noch keine Spiele angesetzt. Es
