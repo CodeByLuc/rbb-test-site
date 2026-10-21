@@ -112,7 +112,7 @@ export default async function TeamSeite({ params }: Props) {
               bild={team.teamfoto}
               groesse="hero"
               priority
-              className="aspect-16/9 w-full object-cover"
+              className="h-auto w-full"
               sizes="(max-width: 1024px) 100vw, 60vw"
             />
           </div>
