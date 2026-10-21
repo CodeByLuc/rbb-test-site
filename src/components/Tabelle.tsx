@@ -21,8 +21,8 @@ export function Tabelle({
   if (zeilen.length === 0) return null
 
   const istEigenes = (name: string) => name.toLowerCase().includes(eigenerName.toLowerCase())
-  const kopf = 'px-2 py-3 text-center font-normal'
-  const zahl = 'px-2 py-3.5 text-center text-base tabular-nums text-white/75'
+  const kopf = 'px-1.5 py-3 text-center font-normal'
+  const zahl = 'px-1.5 py-3.5 text-center text-base tabular-nums text-white/75'
 
   return (
     <section className="kachel overflow-hidden bg-nacht text-white shadow-xl">
@@ -53,9 +53,6 @@ export function Tabelle({
             <th scope="col" className={kopf}>
               Tore
             </th>
-            <th scope="col" className={kopf}>
-              Diff.
-            </th>
             <th scope="col" className={`${kopf} pr-5`}>
               Punkte
             </th>
@@ -81,7 +78,7 @@ export function Tabelle({
                   </span>
                 </td>
                 <td
-                  className={`px-2 py-3.5 font-display text-lg leading-tight tracking-wide uppercase ${
+                  className={`px-2 py-3.5 font-display text-base leading-tight tracking-wide uppercase ${
                     eigen ? 'text-white' : 'text-white/85'
                   }`}
                 >
@@ -92,9 +89,6 @@ export function Tabelle({
                 <td className={zahl}>{zeile.niederlagen + zeile.niederlagenVerlaengerung}</td>
                 <td className={`${zahl} whitespace-nowrap`}>
                   {zeile.tore}:{zeile.gegentore}
-                </td>
-                <td className={zahl}>
-                  {zeile.differenz > 0 ? `+${zeile.differenz}` : zeile.differenz}
                 </td>
                 <td
                   className={`py-3.5 pr-5 pl-2 text-center font-display text-2xl font-extrabold tabular-nums ${
