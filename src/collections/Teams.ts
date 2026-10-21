@@ -199,6 +199,15 @@ export const Teams: CollectionConfig = {
               admin: { description: 'Nummer der Liga in der SIHF-Datenbank. Optional.' },
             },
             {
+              name: 'sihfRanglisteKey',
+              type: 'text',
+              label: 'Club-Schnittstelle: Aufruf-Schlüssel (Rangliste)',
+              admin: {
+                description:
+                  'Aus MySIHF → Club-Schnittstelle (Widget «Rangliste», Format XML). Nur die Schlüssel-Nummer, ohne Adresse. Damit zeigt die Website die offizielle Tabelle des Verbands.',
+              },
+            },
+            {
               name: 'tabellenUrl',
               type: 'text',
               label: 'Link zur Tabelle',

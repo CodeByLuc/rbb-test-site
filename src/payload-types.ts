@@ -327,6 +327,10 @@ export interface Team {
    */
   sihfLeagueId?: string | null;
   /**
+   * Aus MySIHF → Club-Schnittstelle (Widget «Rangliste», Format XML). Nur die Schlüssel-Nummer, ohne Adresse. Damit zeigt die Website die offizielle Tabelle des Verbands.
+   */
+  sihfRanglisteKey?: string | null;
+  /**
    * Vollständige Adresse der Ranglisten-Seite auf sihf.ch.
    */
   tabellenUrl?: string | null;
@@ -592,6 +596,7 @@ export interface TeamsSelect<T extends boolean = true> {
   sihfTeamName?: T;
   sihfTeamId?: T;
   sihfLeagueId?: T;
+  sihfRanglisteKey?: T;
   tabellenUrl?: T;
   manuelleSpiele?:
     | T

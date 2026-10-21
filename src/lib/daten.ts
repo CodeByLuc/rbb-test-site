@@ -10,7 +10,13 @@ import type {
   Team,
   Verein,
 } from '../payload-types'
-import { baueSpielplan, holeTeamSpielplan, spieleAusManuellerListe, type TeamSpielplan } from './sihf'
+import {
+  baueSpielplan,
+  holeClubRangliste,
+  holeTeamSpielplan,
+  spieleAusManuellerListe,
+  type TeamSpielplan,
+} from './sihf'
 
 export const payloadHolen = async () => getPayload({ config: await configPromise })
 
@@ -86,7 +92,7 @@ export async function holeTeam(slug: string): Promise<Team | null> {
  * die Amateurliga dort erfasst ist. Sobald die Live-Abfrage Spiele findet,
  * hat sie Vorrang.
  */
-export async function holeTeamSpielplanMitFallback(
+async function spielplanOhneRangliste(
   team: Pick<Team, 'sihfLeagueId' | 'sihfTeamId' | 'sihfTeamName' | 'manuelleSpiele'>,
   opts?: { saison?: string; revalidate?: number },
 ): Promise<TeamSpielplan> {
@@ -103,6 +109,26 @@ export async function holeTeamSpielplanMitFallback(
 
   const manuell = spieleAusManuellerListe(team.manuelleSpiele)
   return baueSpielplan(manuell, { teamName: team.sihfTeamName })
+}
+
+/**
+ * Spielplan, Resultate und Tabelle eines Teams. Ist beim Team der
+ * Aufruf-Schlüssel der Club-Schnittstelle hinterlegt und liefert sie eine
+ * Rangliste, ersetzt diese offizielle Tabelle die selbst berechnete.
+ */
+export async function holeTeamSpielplanMitFallback(
+  team: Pick<
+    Team,
+    'sihfLeagueId' | 'sihfTeamId' | 'sihfTeamName' | 'manuelleSpiele' | 'sihfRanglisteKey'
+  >,
+  opts?: { saison?: string; revalidate?: number },
+): Promise<TeamSpielplan> {
+  const plan = await spielplanOhneRangliste(team, opts)
+  // Nur für die laufende Saison – die Schlüssel-Rangliste ist immer die aktuelle.
+  if (!team.sihfRanglisteKey || opts?.saison) return plan
+
+  const tabelle = await holeClubRangliste(team.sihfRanglisteKey, opts?.revalidate)
+  return tabelle.length > 0 ? { ...plan, tabelle } : plan
 }
 
 export async function holePosts(optionen?: {

@@ -459,3 +459,64 @@ export function resultatText(spiel: SihfSpiel): string {
 
 export const SIHF_SPIEL_URL = (gameId: string) =>
   `https://www.sihf.ch/de/game-center/game/#/${gameId}`
+
+/**
+ * Club-Schnittstelle von Swiss Ice Hockey (MySIHF → «Club-Schnittstelle»).
+ * Jedes Widget hat einen Aufruf-Schlüssel (KeyId); mit Ausgabeformat XML
+ * liefert die URL die offizielle Rangliste des Teams in der gewählten Phase.
+ * Gegenüber der eigenen Berechnung aus den Spielen zählt sie genau so, wie
+ * der Verband wertet (z. B. ohne Testspiele).
+ */
+const CLUB_BASIS = 'https://clubdata.sihf.ch/Statistics/ClubStatistic.aspx'
+const KEY_ID = /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i
+
+const xmlWert = (block: string, tag: string): string => {
+  const m = block.match(new RegExp(`<${tag}>([^<]*)</${tag}>`))
+  return (m?.[1] ?? '')
+    .trim()
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&amp;/g, '&')
+}
+
+const xmlZahl = (block: string, tag: string): number => {
+  const n = Number(xmlWert(block, tag))
+  return Number.isFinite(n) ? n : 0
+}
+
+/** Holt die Rangliste eines Club-Widgets. Leer, wenn nichts oder Fehler. */
+export async function holeClubRangliste(keyId: string, revalidate = 300): Promise<TabellenZeile[]> {
+  const schluessel = keyId.trim()
+  if (!KEY_ID.test(schluessel)) return []
+
+  try {
+    const antwort = await fetch(`${CLUB_BASIS}?keyid=${schluessel}`, {
+      ...(revalidate > 0 ? { next: { revalidate } } : { cache: 'no-store' as RequestCache }),
+    })
+    if (!antwort.ok) return []
+
+    // Die Schnittstelle liefert ISO-8859-1, nicht UTF-8.
+    const text = new TextDecoder('iso-8859-1').decode(await antwort.arrayBuffer())
+    if (!text.includes('<Ranking')) return []
+
+    return (text.match(/<Team>[\s\S]*?<\/Team>/g) ?? []).map((block) => ({
+      rang: xmlZahl(block, 'Pos'),
+      teamId: xmlZahl(block, 'TeamID') || null,
+      name: xmlWert(block, 'TeamName'),
+      spiele: xmlZahl(block, 'Games'),
+      siege: xmlZahl(block, 'GamesWonInTime'),
+      siegeVerlaengerung: xmlZahl(block, 'GamesWonExtraTime'),
+      niederlagenVerlaengerung: xmlZahl(block, 'GamesLostExtraTime'),
+      niederlagen: xmlZahl(block, 'GamesLostInTime'),
+      tore: xmlZahl(block, 'GoalsFor'),
+      gegentore: xmlZahl(block, 'GoalsAgainst'),
+      differenz: xmlZahl(block, 'GoalsDifference'),
+      punkte: xmlZahl(block, 'Points'),
+    }))
+  } catch (fehler) {
+    console.error('SIHF Club-Schnittstelle nicht erreichbar', fehler)
+    return []
+  }
+}
