@@ -460,7 +460,7 @@ export function resultatText(spiel: SihfSpiel): string {
 }
 
 export const SIHF_SPIEL_URL = (gameId: string) =>
-  `https://www.sihf.ch/de/game-center/game/#/${gameId}`
+  `https://www.sihf.ch/de/game-center/game/${gameId}`
 
 /**
  * Club-Schnittstelle von Swiss Ice Hockey (MySIHF → «Club-Schnittstelle»).
@@ -567,9 +567,29 @@ export async function holeClubSpiele(keyId: string, revalidate = 300): Promise<S
       if (![j, m, t].every(Number.isFinite)) return []
 
       const zeit = xmlWert(block, 'Begin')
-      const toreHeim = zahlOderNull(xmlWert(block, 'HomePoints'))
-      const toreGast = zahlOderNull(xmlWert(block, 'AwayPoints'))
-      const gespielt = toreHeim !== null && toreGast !== null
+      // HomePoints/AwayPoints sind die Tabellenpunkte aus dem Spiel (z. B. 1:2
+      // nach verlorenem Penaltyschiessen), nicht die Tore. Sie zeigen nur, ob
+      // das Spiel gewertet ist.
+      const punkteHeim = zahlOderNull(xmlWert(block, 'HomePoints'))
+      const punkteGast = zahlOderNull(xmlWert(block, 'AwayPoints'))
+      const gespielt = punkteHeim !== null && punkteGast !== null
+
+      // Die Tore stehen in den Drittelresultaten, z. B. "2:5,1:1,6:3,0:1[p]":
+      // drei Drittel, danach Verlängerung/Penaltyschiessen mit Markierung.
+      // Die Summe ergibt das Schlussresultat wie auf sihf.ch (hier 9:10).
+      const teile = xmlWert(block, 'ThirdsResults')
+        .split(',')
+        .map((teil) => teil.trim().match(/^(\d+):(\d+)(?:\[(\w+)\])?$/))
+      const drittel = teile.every(Boolean) && teile.length > 0 ? (teile as RegExpMatchArray[]) : []
+      const summe = (seite: 1 | 2) => drittel.reduce((acc, teil) => acc + Number(teil[seite]), 0)
+      const regulaer = drittel.filter((teil) => !teil[3])
+      const penalty = drittel.some((teil) => teil[3]?.toLowerCase() === 'p')
+      const verlaengerung =
+        !penalty && (xmlWert(block, 'Overtime').toLowerCase() === 'true' || drittel.some((teil) => teil[3]))
+
+      // Ohne Drittelresultate bleibt nur der gemeldete Wert als Notlösung.
+      const toreHeim = gespielt ? (drittel.length > 0 ? summe(1) : punkteHeim) : null
+      const toreGast = gespielt ? (drittel.length > 0 ? summe(2) : punkteGast) : null
 
       return [
         {
@@ -584,11 +604,10 @@ export async function holeClubSpiele(keyId: string, revalidate = 300): Promise<S
           toreGast,
           gespielt,
           abgesagt: false,
-          // Im Drittelresultat markiert «[p]» ein Penaltyschiessen.
-          entscheidung: /[p]/i.test(xmlWert(block, 'ThirdsResults')) ? 'SO' : '',
+          entscheidung: penalty ? 'SO' : verlaengerung ? 'OT' : '',
           status: xmlWert(block, 'StatusSymbol'),
-          drittelHeim: [],
-          drittelGast: [],
+          drittelHeim: regulaer.map((teil) => teil[1]),
+          drittelGast: regulaer.map((teil) => teil[2]),
           ort: xmlWert(block, 'Arena') || null,
         },
       ]
