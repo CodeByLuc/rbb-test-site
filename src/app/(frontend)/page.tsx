@@ -69,11 +69,11 @@ function Resultat({ team, spiel }: { team: Team; spiel: SihfSpiel }) {
         <span className="min-w-0">
           <span className="block font-display text-xs tracking-[0.2em] text-white/80 uppercase">
             {team.name} · {spiel.wochentag} {spiel.datum.slice(0, 6)}
-            {zusatz && <span className="normal-case tracking-normal"> · {zusatz}</span>}
           </span>
           <span className="mt-1.5 block font-display text-xl leading-none tracking-wide uppercase decoration-2 underline-offset-4 group-hover:underline">
             {wirSindHeim ? 'gegen' : 'bei'} {gegner}
           </span>
+          {zusatz && <span className="mt-1 block text-xs text-white/80">{zusatz}</span>}
         </span>
         <span className="flex shrink-0 items-center gap-3">
           <span className="tafelzahl text-5xl">
@@ -193,15 +193,15 @@ export default async function Startseite() {
             aria-hidden="true"
             className="absolute inset-0 bg-[repeating-linear-gradient(108deg,rgba(255,255,255,0.07)_0_2px,transparent_2px_30px)]"
           />
-          <div className="inhalt relative flex flex-col gap-5 py-6 md:flex-row md:items-center md:gap-10">
+          <div className="inhalt relative flex flex-col gap-4 py-5 md:flex-row md:items-center md:gap-10 md:py-6">
             <h2
               id="resultate-titel"
               className="shrink-0 font-display leading-[0.9] uppercase"
             >
               <span className="block text-sm tracking-[0.3em] text-white/80">Letzte</span>
-              <span className="block text-4xl">Resultate</span>
+              <span className="block text-3xl md:text-4xl">Resultate</span>
             </h2>
-            <ul className="flex flex-1 flex-col gap-5 border-t border-white/30 pt-5 md:flex-row md:flex-wrap md:gap-x-10 md:gap-y-5 md:border-t-0 md:border-l md:pt-0 md:pl-10">
+            <ul className="flex flex-1 flex-col gap-5 border-t border-white/30 pt-4 md:flex-row md:flex-wrap md:gap-x-10 md:gap-y-5 md:border-t-0 md:border-l md:pt-0 md:pl-10">
               {resultate.map((eintrag) => (
                 <Resultat key={eintrag.team.id} {...eintrag} />
               ))}
