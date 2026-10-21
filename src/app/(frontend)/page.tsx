@@ -39,45 +39,52 @@ async function alleSpielplaene(teams: Team[]): Promise<TeamPlan[]> {
   return plaene.filter((eintrag) => eintrag.plan.letztes)
 }
 
-/** Ein Resultat als Kachel im roten Resultate-Balken. */
-function ResultatKachel({ team, spiel }: { team: Team; spiel: SihfSpiel }) {
+const ausgangText = { S: 'Sieg', N: 'Niederlage', U: 'Unentschieden' } as const
+const ausgangFarbe = {
+  S: 'bg-white text-rot-dunkel',
+  N: 'bg-nacht text-white',
+  U: 'bg-white/25 text-white',
+} as const
+const entscheidungText: Record<string, string> = {
+  OT: 'nach Verlängerung',
+  SO: 'nach Penaltyschiessen',
+}
+
+/** Ein Resultat im roten Balken – Anzeigetafel statt Kachel. */
+function Resultat({ team, spiel }: { team: Team; spiel: SihfSpiel }) {
   const eigenerName = team.sihfTeamName || 'Rot-Blau'
   const wirSindHeim = spiel.heim.name.toLowerCase().includes(eigenerName.toLowerCase())
   const eigene = wirSindHeim ? spiel.toreHeim! : spiel.toreGast!
   const fremde = wirSindHeim ? spiel.toreGast! : spiel.toreHeim!
   const gegner = wirSindHeim ? spiel.gast.name : spiel.heim.name
   const ausgang = eigene > fremde ? 'S' : eigene < fremde ? 'N' : 'U'
-  const marke =
-    ausgang === 'S' ? 'bg-emerald-500' : ausgang === 'N' ? 'bg-rot' : 'bg-white/25'
-  const text = ausgang === 'S' ? 'Sieg' : ausgang === 'N' ? 'Niederlage' : 'Unentschieden'
-  const kurzdatum = `${spiel.datum.slice(0, 6)}${spiel.datum.slice(8)}`
+  const zusatz = entscheidungText[spiel.entscheidung]
 
   return (
-    <li>
+    <li className="md:min-w-0">
       <Link
         href={`/teams/${team.slug}`}
-        className="flex items-center gap-4 bg-nacht px-4 py-2.5 text-white transition-colors hover:bg-nacht-tief"
+        className="group flex items-center justify-between gap-6 md:justify-start"
       >
         <span className="min-w-0">
-          <span className="block font-display text-lg leading-none tracking-wide uppercase">
-            {team.name}
+          <span className="block font-display text-xs tracking-[0.2em] text-white/80 uppercase">
+            {team.name} · {spiel.wochentag} {spiel.datum.slice(0, 6)}
+            {zusatz && <span className="normal-case tracking-normal"> · {zusatz}</span>}
           </span>
-          <span className="mt-1 block truncate text-xs text-white/65">
-            {wirSindHeim ? 'gegen' : 'bei'} {gegner} · {kurzdatum}
+          <span className="mt-1.5 block font-display text-xl leading-none tracking-wide uppercase decoration-2 underline-offset-4 group-hover:underline">
+            {wirSindHeim ? 'gegen' : 'bei'} {gegner}
           </span>
         </span>
-        <span className="ml-auto flex shrink-0 items-center gap-2">
-          <span className="tafelzahl text-2xl">
+        <span className="flex shrink-0 items-center gap-3">
+          <span className="tafelzahl text-5xl">
             {eigene}
-            <span className="text-rot">:</span>
+            <span className="text-white/55">:</span>
             {fremde}
           </span>
           <span
-            className={`inline-flex h-6 w-6 items-center justify-center font-display text-sm font-extrabold ${marke}`}
-            title={text}
+            className={`etikett px-2 py-1 font-display text-xs tracking-[0.15em] uppercase ${ausgangFarbe[ausgang]}`}
           >
-            {ausgang}
-            <span className="sr-only">{text}</span>
+            {ausgangText[ausgang]}
           </span>
         </span>
       </Link>
@@ -175,19 +182,28 @@ export default async function Startseite() {
         <div className="trikotband" />
       </section>
 
-      {/* Roter Balken: letztes Resultat jedes Teams als Schnellüberblick. */}
+      {/* Roter Balken: letztes Resultat jedes Teams der laufenden Saison. */}
       {resultate.length > 0 && (
-        <section aria-labelledby="resultate-titel" className="bg-rot text-white">
-          <div className="inhalt flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:gap-6">
+        <section
+          aria-labelledby="resultate-titel"
+          className="relative overflow-hidden bg-rot text-white"
+        >
+          {/* Dieselben diagonalen Linien wie im Hero, hier in Weiss. */}
+          <div
+            aria-hidden="true"
+            className="absolute inset-0 bg-[repeating-linear-gradient(108deg,rgba(255,255,255,0.07)_0_2px,transparent_2px_30px)]"
+          />
+          <div className="inhalt relative flex flex-col gap-5 py-6 md:flex-row md:items-center md:gap-10">
             <h2
               id="resultate-titel"
-              className="shrink-0 font-display text-2xl leading-none tracking-wide uppercase"
+              className="shrink-0 font-display leading-[0.9] uppercase"
             >
-              Letzte Resultate
+              <span className="block text-sm tracking-[0.3em] text-white/80">Letzte</span>
+              <span className="block text-4xl">Resultate</span>
             </h2>
-            <ul className="grid flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]">
+            <ul className="flex flex-1 flex-col gap-5 border-t border-white/30 pt-5 md:flex-row md:flex-wrap md:gap-x-10 md:gap-y-5 md:border-t-0 md:border-l md:pt-0 md:pl-10">
               {resultate.map((eintrag) => (
-                <ResultatKachel key={eintrag.team.id} {...eintrag} />
+                <Resultat key={eintrag.team.id} {...eintrag} />
               ))}
             </ul>
           </div>
