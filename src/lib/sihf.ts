@@ -55,6 +55,8 @@ export type SihfSpiel = {
    * Testspiele/Freundschaftsspiele geben, die keinen Tabellenplatz vergeben.
    */
   zaehltZurTabelle?: boolean
+  /** Austragungsort (nur aus der Club-Schnittstelle bekannt). */
+  ort?: string | null
 }
 
 /**
@@ -517,6 +519,81 @@ export async function holeClubRangliste(keyId: string, revalidate = 300): Promis
     }))
   } catch (fehler) {
     console.error('SIHF Club-Schnittstelle nicht erreichbar', fehler)
+    return []
+  }
+}
+
+/** Anspielzeit (Schweizer Ortszeit) als ISO-Zeitpunkt, z. B. "2026.10.24" + "19:15". */
+function zuercherZeitpunkt(datum: string, zeit: string): string | null {
+  const [j, m, t] = datum.split('.').map(Number)
+  const [h, min] = zeit.split(':').map(Number)
+  if ([j, m, t, h, min].some((n) => !Number.isFinite(n))) return null
+
+  const format = new Intl.DateTimeFormat('en-US', {
+    timeZone: 'Europe/Zurich',
+    hourCycle: 'h23',
+    year: 'numeric',
+    month: 'numeric',
+    day: 'numeric',
+    hour: 'numeric',
+    minute: 'numeric',
+  })
+  const versatz = (ts: number) => {
+    const teile = format.formatToParts(new Date(ts))
+    const wert = (art: string) => Number(teile.find((p) => p.type === art)?.value)
+    return Date.UTC(wert('year'), wert('month') - 1, wert('day'), wert('hour'), wert('minute')) - ts
+  }
+  const roh = Date.UTC(j, m - 1, t, h, min)
+  return new Date(roh - versatz(roh)).toISOString()
+}
+
+/** Holt die Spiele eines Club-Widgets («Nächste Spiele» o. ä., Format XML). */
+export async function holeClubSpiele(keyId: string, revalidate = 300): Promise<SihfSpiel[]> {
+  const schluessel = keyId.trim()
+  if (!KEY_ID.test(schluessel)) return []
+
+  try {
+    const antwort = await fetch(`${CLUB_BASIS}?keyid=${schluessel}`, {
+      ...(revalidate > 0 ? { next: { revalidate } } : { cache: 'no-store' as RequestCache }),
+    })
+    if (!antwort.ok) return []
+
+    const text = new TextDecoder('iso-8859-1').decode(await antwort.arrayBuffer())
+    if (!text.includes('<Result')) return []
+
+    return (text.match(/<Game[ >][\s\S]*?<\/Game>/g) ?? []).flatMap((block): SihfSpiel[] => {
+      const datum = xmlWert(block, 'Date')
+      const [j, m, t] = datum.split('.').map(Number)
+      if (![j, m, t].every(Number.isFinite)) return []
+
+      const zeit = xmlWert(block, 'Begin')
+      const toreHeim = zahlOderNull(xmlWert(block, 'HomePoints'))
+      const toreGast = zahlOderNull(xmlWert(block, 'AwayPoints'))
+      const gespielt = toreHeim !== null && toreGast !== null
+
+      return [
+        {
+          gameId: xmlWert(block, 'GameID') || null,
+          wochentag: wochentage[new Date(Date.UTC(j, m - 1, t)).getUTCDay()] ?? '',
+          datum: `${String(t).padStart(2, '0')}.${String(m).padStart(2, '0')}.${j}`,
+          zeit,
+          zeitpunkt: zuercherZeitpunkt(datum, zeit),
+          heim: { id: xmlZahl(block, 'HomeTeamID') || null, name: xmlWert(block, 'HomeTeamName'), kuerzel: null },
+          gast: { id: xmlZahl(block, 'AwayTeamID') || null, name: xmlWert(block, 'AwayTeamName'), kuerzel: null },
+          toreHeim,
+          toreGast,
+          gespielt,
+          abgesagt: false,
+          entscheidung: '',
+          status: xmlWert(block, 'StatusSymbol'),
+          drittelHeim: [],
+          drittelGast: [],
+          ort: xmlWert(block, 'Arena') || null,
+        },
+      ]
+    })
+  } catch (fehler) {
+    console.error('SIHF Club-Schnittstelle (Spiele) nicht erreichbar', fehler)
     return []
   }
 }

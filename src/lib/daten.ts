@@ -13,6 +13,7 @@ import type {
 import {
   baueSpielplan,
   holeClubRangliste,
+  holeClubSpiele,
   holeTeamSpielplan,
   spieleAusManuellerListe,
   type TeamSpielplan,
@@ -119,14 +120,32 @@ async function spielplanOhneRangliste(
 export async function holeTeamSpielplanMitFallback(
   team: Pick<
     Team,
-    'sihfLeagueId' | 'sihfTeamId' | 'sihfTeamName' | 'manuelleSpiele' | 'sihfRanglisteKey'
+    'sihfLeagueId' | 'sihfTeamId' | 'sihfTeamName' | 'manuelleSpiele' | 'sihfRanglisteKey' | 'sihfSpieleKey'
   >,
   opts?: { saison?: string; revalidate?: number },
 ): Promise<TeamSpielplan> {
-  const plan = await spielplanOhneRangliste(team, opts)
-  // Nur für die laufende Saison – die Schlüssel-Rangliste ist immer die aktuelle.
-  if (!team.sihfRanglisteKey || opts?.saison) return plan
+  let plan = await spielplanOhneRangliste(team, opts)
+  // Die Schlüssel der Club-Schnittstelle gelten immer für die laufende Saison.
+  if (opts?.saison) return plan
 
+  const eigenes = { teamId: team.sihfTeamId, teamName: team.sihfTeamName }
+
+  // Kommende Spiele kommen aus der Club-Schnittstelle (inkl. Halle und
+  // aktueller Anspielzeit); bereits gespielte Resultate bleiben aus der bisherigen Quelle.
+  if (team.sihfSpieleKey) {
+    const kommende = (await holeClubSpiele(team.sihfSpieleKey, opts?.revalidate)).filter(
+      (s) => !s.gespielt,
+    )
+    if (kommende.length > 0) {
+      const gespielt = plan.spiele.filter((s) => s.gespielt)
+      const alle = [...gespielt, ...kommende].sort((a, b) =>
+        (a.zeitpunkt ?? '').localeCompare(b.zeitpunkt ?? ''),
+      )
+      plan = baueSpielplan(alle, eigenes)
+    }
+  }
+
+  if (!team.sihfRanglisteKey) return plan
   const tabelle = await holeClubRangliste(team.sihfRanglisteKey, opts?.revalidate)
   return tabelle.length > 0 ? { ...plan, tabelle } : plan
 }

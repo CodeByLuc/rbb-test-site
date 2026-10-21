@@ -175,6 +175,7 @@ export function NaechstesSpiel({
           <span className="text-white/80">{spiel.zeit}</span>
           <span className="text-white/60">{heimIstWir ? 'Heim' : 'Auswärts'}</span>
         </div>
+        {spiel.ort && <p className="mt-3 text-sm text-white/70">{spiel.ort}</p>}
       </div>
     </div>
   )
