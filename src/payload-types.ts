@@ -335,6 +335,10 @@ export interface Team {
    */
   sihfSpieleKey?: string | null;
   /**
+   * Aus MySIHF → Club-Schnittstelle (Widget «Letzte Spiele», Format XML). Nur die Schlüssel-Nummer, ohne Adresse. Liefert die Resultate für die Startseite und den Spielplan.
+   */
+  sihfResultateKey?: string | null;
+  /**
    * Vollständige Adresse der Ranglisten-Seite auf sihf.ch.
    */
   tabellenUrl?: string | null;
@@ -602,6 +606,7 @@ export interface TeamsSelect<T extends boolean = true> {
   sihfLeagueId?: T;
   sihfRanglisteKey?: T;
   sihfSpieleKey?: T;
+  sihfResultateKey?: T;
   tabellenUrl?: T;
   manuelleSpiele?:
     | T

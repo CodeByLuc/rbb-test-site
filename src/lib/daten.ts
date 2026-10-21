@@ -16,6 +16,7 @@ import {
   holeClubSpiele,
   holeTeamSpielplan,
   spieleAusManuellerListe,
+  type SihfSpiel,
   type TeamSpielplan,
 } from './sihf'
 
@@ -120,7 +121,7 @@ async function spielplanOhneRangliste(
 export async function holeTeamSpielplanMitFallback(
   team: Pick<
     Team,
-    'sihfLeagueId' | 'sihfTeamId' | 'sihfTeamName' | 'manuelleSpiele' | 'sihfRanglisteKey' | 'sihfSpieleKey'
+    'sihfLeagueId' | 'sihfTeamId' | 'sihfTeamName' | 'manuelleSpiele' | 'sihfRanglisteKey' | 'sihfSpieleKey' | 'sihfResultateKey'
   >,
   opts?: { saison?: string; revalidate?: number },
 ): Promise<TeamSpielplan> {
@@ -129,6 +130,22 @@ export async function holeTeamSpielplanMitFallback(
   if (opts?.saison) return plan
 
   const eigenes = { teamId: team.sihfTeamId, teamName: team.sihfTeamName }
+  const nachZeit = (a: SihfSpiel, b: SihfSpiel) =>
+    (a.zeitpunkt ? Date.parse(a.zeitpunkt) : 0) - (b.zeitpunkt ? Date.parse(b.zeitpunkt) : 0)
+
+  // Bereits gespielte Spiele aus der Club-Schnittstelle («Letzte Spiele»):
+  // sie sind offiziell und aktuell und gehen der bisherigen Quelle vor.
+  if (team.sihfResultateKey) {
+    const gespielt = (await holeClubSpiele(team.sihfResultateKey, opts?.revalidate)).filter(
+      (s) => s.gespielt,
+    )
+    if (gespielt.length > 0) {
+      const schluessel = (s: SihfSpiel) => s.gameId ?? `${s.datum}|${s.heim.name}|${s.gast.name}`
+      const neu = new Set(gespielt.map(schluessel))
+      const uebrige = plan.spiele.filter((s) => !neu.has(schluessel(s)))
+      plan = baueSpielplan([...uebrige, ...gespielt].sort(nachZeit), eigenes)
+    }
+  }
 
   // Kommende Spiele kommen aus der Club-Schnittstelle (inkl. Halle und
   // aktueller Anspielzeit); bereits gespielte Resultate bleiben aus der bisherigen Quelle.
@@ -138,9 +155,7 @@ export async function holeTeamSpielplanMitFallback(
     )
     if (kommende.length > 0) {
       const gespielt = plan.spiele.filter((s) => s.gespielt)
-      const alle = [...gespielt, ...kommende].sort((a, b) =>
-        (a.zeitpunkt ?? '').localeCompare(b.zeitpunkt ?? ''),
-      )
+      const alle = [...gespielt, ...kommende].sort(nachZeit)
       plan = baueSpielplan(alle, eigenes)
     }
   }

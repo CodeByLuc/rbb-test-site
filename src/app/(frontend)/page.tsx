@@ -23,15 +23,13 @@ import type { Team } from '../../payload-types'
 // Die Startseite wird häufig neu gebaut für aktuelle Logo/Sponsor-Änderungen
 export const revalidate = 60
 
-type TeamPlan = { team: Team; plan: TeamSpielplan }
+type TeamPlan = { team: Team; plan: TeamSpielplan; istVorsaison: boolean }
 
 /**
- * Spielpläne aller angebundenen Teams. Hat ein Team in der neuen Saison noch
- * keine Spiele (Sommerpause oder Saisonstart steht erst bevor), wird für
- * genau dieses Team auf die letzte Saison zurückgegriffen – unabhängig davon,
- * ob andere Teams schon Spiele haben. Sonst würde z. B. die 1. Mannschaft
- * beim eigenen Saisonstart alle Nachwuchsteams von der Startseite verdrängen,
- * die noch nicht gestartet sind.
+ * Letztes Resultat jedes angebundenen Teams. Hat ein Team in der laufenden
+ * Saison noch kein Spiel absolviert, greift genau für dieses Team das letzte
+ * Resultat der Vorsaison – unabhängig davon, ob andere Teams schon gespielt
+ * haben.
  */
 async function alleSpielplaene(
   teams: Team[],
@@ -43,10 +41,9 @@ async function alleSpielplaene(
 
   const plaene = await Promise.all(
     angebunden.map(async (team) => {
-      // Berücksichtigt auch von Hand erfasste Spiele, falls die SIHF-Statistik
-      // für die Liga dieses Teams (noch) nichts liefert.
+      // Berücksichtigt auch die Club-Schnittstelle und von Hand erfasste Spiele.
       const aktuell = await holeTeamSpielplanMitFallback(team)
-      if (aktuell.spiele.length > 0) return { team, plan: aktuell, istVorsaison: false }
+      if (aktuell.letztes) return { team, plan: aktuell, istVorsaison: false }
 
       const alt = await holeTeamSpielplan({
         ligaId: team.sihfLeagueId,
@@ -54,44 +51,69 @@ async function alleSpielplaene(
         teamName: team.sihfTeamName,
         saison: vorsaison,
       })
-      return { team, plan: alt, istVorsaison: alt.spiele.length > 0 }
+      return { team, plan: alt, istVorsaison: alt.letztes !== null }
     }),
   )
 
-  const mitSpielen = plaene.filter((eintrag) => eintrag.plan.spiele.length > 0)
-  // Eine gemischte Anzeige (manche Teams aktuell, andere Vorsaison) ist normal
-  // beim Saisonstart – der Hinweistext zeigt sich darum nur, wenn ALLE
-  // sichtbaren Teams noch in der Vorsaison stecken.
-  const istVorsaison = mitSpielen.length > 0 && mitSpielen.every((e) => e.istVorsaison)
-  return { plaene: mitSpielen, istVorsaison }
+  const mitResultat = plaene.filter((eintrag) => eintrag.plan.letztes)
+  // Der Hinweis «Saison …» im Balken erscheint nur, wenn ALLE gezeigten Teams
+  // noch bei der Vorsaison stehen; sonst steht «Vorsaison» an der einzelnen Kachel.
+  const istVorsaison = mitResultat.length > 0 && mitResultat.every((e) => e.istVorsaison)
+  return { plaene: mitResultat, istVorsaison }
 }
 
-/** Ein Resultat als schmale Zeile im Resultate-Feed. */
-function ResultatZeile({ team, spiel }: { team: Team; spiel: SihfSpiel }) {
+/** Ein Resultat als Kachel im roten Resultate-Balken. */
+function ResultatKachel({
+  team,
+  spiel,
+  vorsaison = false,
+}: {
+  team: Team
+  spiel: SihfSpiel
+  vorsaison?: boolean
+}) {
   const eigenerName = team.sihfTeamName || 'Rot-Blau'
   const wirSindHeim = spiel.heim.name.toLowerCase().includes(eigenerName.toLowerCase())
   const eigene = wirSindHeim ? spiel.toreHeim! : spiel.toreGast!
   const fremde = wirSindHeim ? spiel.toreGast! : spiel.toreHeim!
   const gegner = wirSindHeim ? spiel.gast.name : spiel.heim.name
-  const streifen = eigene > fremde ? 'border-emerald-500' : eigene < fremde ? 'border-rot' : 'border-white/40'
+  const ausgang = eigene > fremde ? 'S' : eigene < fremde ? 'N' : 'U'
+  const marke =
+    ausgang === 'S' ? 'bg-emerald-500' : ausgang === 'N' ? 'bg-rot' : 'bg-white/25'
+  const text = ausgang === 'S' ? 'Sieg' : ausgang === 'N' ? 'Niederlage' : 'Unentschieden'
+  const kurzdatum = `${spiel.datum.slice(0, 6)}${spiel.datum.slice(8)}`
 
   return (
-    <Link
-      href={`/teams/${team.slug}`}
-      className={`flex w-56 shrink-0 items-center justify-between gap-3 border-l-2 bg-white/5 py-2 pr-3 pl-3 transition-colors hover:bg-white/12 ${streifen}`}
-    >
-      <span className="min-w-0 truncate">
-        <span className="font-display text-sm tracking-wide text-white uppercase">{team.name}</span>
-        <span className="ml-2 truncate text-xs text-white/50">
-          {wirSindHeim ? 'gegen' : 'bei'} {gegner}
+    <li>
+      <Link
+        href={`/teams/${team.slug}`}
+        className="flex items-center gap-4 bg-nacht px-4 py-2.5 text-white transition-colors hover:bg-nacht-tief"
+      >
+        <span className="min-w-0">
+          <span className="block font-display text-lg leading-none tracking-wide uppercase">
+            {team.name}
+          </span>
+          <span className="mt-1 block truncate text-xs text-white/65">
+            {vorsaison && <>Vorsaison · </>}
+            {wirSindHeim ? 'gegen' : 'bei'} {gegner} · {kurzdatum}
+          </span>
         </span>
-      </span>
-      <span className="tafelzahl shrink-0 text-lg">
-        {eigene}
-        <span className="text-rot">:</span>
-        {fremde}
-      </span>
-    </Link>
+        <span className="ml-auto flex shrink-0 items-center gap-2">
+          <span className="tafelzahl text-2xl">
+            {eigene}
+            <span className="text-rot">:</span>
+            {fremde}
+          </span>
+          <span
+            className={`inline-flex h-6 w-6 items-center justify-center font-display text-sm font-extrabold ${marke}`}
+            title={text}
+          >
+            {ausgang}
+            <span className="sr-only">{text}</span>
+          </span>
+        </span>
+      </Link>
+    </li>
   )
 }
 
@@ -112,7 +134,11 @@ export default async function Startseite() {
   // Neuestes Resultat zuerst, damit oben wirklich das letzte Spiel steht.
   const resultate = plaene
     .filter((eintrag) => eintrag.plan.letztes)
-    .map((eintrag) => ({ team: eintrag.team, spiel: eintrag.plan.letztes! }))
+    .map((eintrag) => ({
+      team: eintrag.team,
+      spiel: eintrag.plan.letztes!,
+      vorsaison: eintrag.istVorsaison,
+    }))
     .sort((a, b) => {
       const da = datumAusSihf(a.spiel)?.getTime() ?? 0
       const db = datumAusSihf(b.spiel)?.getTime() ?? 0
@@ -179,34 +205,36 @@ export default async function Startseite() {
           </div>
         </div>
 
-        {/* Resultate als schmaler Feed – ein Ticker, keine Anzeigetafel. */}
-        {resultate.length > 0 && (
-          <div className="relative border-t border-white/12 bg-black/35">
-            <div className="inhalt flex items-center gap-4 py-1.5">
-              <h2 className="abschnittstitel shrink-0 py-1 text-sm whitespace-nowrap text-white/70">
-                Letzte Resultate
-                {istVorsaison && (
-                  <span className="ml-2 hidden font-sans text-xs font-normal text-white/40 normal-case sm:inline">
-                    Saison {Number(saisonAlias()) - 2}/{String(Number(saisonAlias()) - 1).slice(2)}
-                  </span>
-                )}
-              </h2>
-              {/*
-                Echter Ticker: die Zeilen bleiben immer einzeilig und laufen bei
-                Platzmangel seitlich weg, statt umzubrechen und die Leiste hoch
-                zu machen.
-              */}
-              <div className="-mr-4 flex min-w-0 flex-1 gap-px overflow-x-auto bg-white/10 pr-4">
-                {resultate.map((eintrag) => (
-                  <ResultatZeile key={eintrag.team.id} {...eintrag} />
-                ))}
-              </div>
-            </div>
-          </div>
-        )}
-
         <div className="trikotband" />
       </section>
+
+      {/* Roter Balken: letztes Resultat jedes Teams als Schnellüberblick. */}
+      {resultate.length > 0 && (
+        <section aria-labelledby="resultate-titel" className="bg-rot text-white">
+          <div className="inhalt flex flex-col gap-3 py-4 lg:flex-row lg:items-center lg:gap-6">
+            <h2
+              id="resultate-titel"
+              className="shrink-0 font-display text-2xl leading-none tracking-wide uppercase"
+            >
+              Letzte Resultate
+              {istVorsaison && (
+                <span className="mt-1 block font-sans text-xs font-normal tracking-normal text-white/80 normal-case">
+                  Saison {Number(saisonAlias()) - 2}/{String(Number(saisonAlias()) - 1).slice(2)}
+                </span>
+              )}
+            </h2>
+            <ul className="grid flex-1 gap-2 sm:grid-cols-2 lg:grid-cols-[repeat(auto-fit,minmax(15rem,1fr))]">
+              {resultate.map((eintrag) => (
+                <ResultatKachel
+                  key={eintrag.team.id}
+                  {...eintrag}
+                  vorsaison={eintrag.vorsaison && !istVorsaison}
+                />
+              ))}
+            </ul>
+          </div>
+        </section>
+      )}
 
       {/* News und Sponsoren */}
       <section className="inhalt py-8">

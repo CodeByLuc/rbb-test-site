@@ -217,6 +217,15 @@ export const Teams: CollectionConfig = {
               },
             },
             {
+              name: 'sihfResultateKey',
+              type: 'text',
+              label: 'Club-Schnittstelle: Aufruf-Schlüssel (letzte Spiele)',
+              admin: {
+                description:
+                  'Aus MySIHF → Club-Schnittstelle (Widget «Letzte Spiele», Format XML). Nur die Schlüssel-Nummer, ohne Adresse. Liefert die Resultate für die Startseite und den Spielplan.',
+              },
+            },
+            {
               name: 'tabellenUrl',
               type: 'text',
               label: 'Link zur Tabelle',

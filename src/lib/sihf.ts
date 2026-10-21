@@ -584,7 +584,8 @@ export async function holeClubSpiele(keyId: string, revalidate = 300): Promise<S
           toreGast,
           gespielt,
           abgesagt: false,
-          entscheidung: '',
+          // Im Drittelresultat markiert «[p]» ein Penaltyschiessen.
+          entscheidung: /[p]/i.test(xmlWert(block, 'ThirdsResults')) ? 'SO' : '',
           status: xmlWert(block, 'StatusSymbol'),
           drittelHeim: [],
           drittelGast: [],
