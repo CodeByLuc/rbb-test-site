@@ -88,6 +88,48 @@ export function NaechstesSpiel({
   )
 }
 
+/** Echte Kürzel sind kurz; manche Quellen liefern dort den vollen Namen. */
+const istKurz = (kuerzel: string | null | undefined): kuerzel is string =>
+  !!kuerzel && kuerzel.length <= 8
+
+/**
+ * Teamname auf der Anzeigetafel: das offizielle Kürzel gross, sonst der volle
+ * Name kleiner und mit Silbentrennung – damit nichts über den Rand läuft.
+ */
+function TeamAnzeige({
+  team,
+  eigen,
+  rechts = false,
+}: {
+  team: SihfSpiel['heim']
+  eigen: boolean
+  rechts?: boolean
+}) {
+  const kuerzel = istKurz(team.kuerzel) ? team.kuerzel : null
+  const farbe = eigen ? 'text-white' : 'text-white/60'
+  const ausrichtung = rechts ? 'text-right' : ''
+
+  if (kuerzel) {
+    return (
+      <span
+        title={team.name}
+        className={`font-display text-3xl leading-none tracking-wide uppercase sm:text-4xl ${farbe} ${ausrichtung}`}
+      >
+        {kuerzel}
+      </span>
+    )
+  }
+
+  return (
+    <span
+      lang="de"
+      className={`font-display text-lg leading-[0.95] break-words hyphens-auto uppercase sm:text-xl ${farbe} ${ausrichtung}`}
+    >
+      {team.name}
+    </span>
+  )
+}
+
 /** Grosse Anzeigetafel für das letzte Resultat. */
 export function LetztesResultat({
   spiel,
@@ -111,27 +153,21 @@ export function LetztesResultat({
           </span>
         </div>
 
-        <div className="grid grid-cols-[1fr_auto_1fr] items-center gap-3 sm:gap-6">
-          <span
-            className={`font-display text-xl leading-[0.9] uppercase sm:text-3xl ${
-              heimIstWir ? 'text-white' : 'text-white/60'
-            }`}
-          >
-            {spiel.heim.name}
-          </span>
+        <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-5">
+          <TeamAnzeige team={spiel.heim} eigen={heimIstWir} />
 
-          <span className="tafelzahl bg-black/40 px-4 py-2 text-5xl text-white sm:px-6 sm:text-7xl">
+          <span className="tafelzahl bg-black/40 px-3 py-2 text-5xl text-white sm:px-5 sm:text-6xl">
             {spiel.toreHeim}<span className="text-rot">:</span>{spiel.toreGast}
           </span>
 
-          <span
-            className={`text-right font-display text-xl leading-[0.9] uppercase sm:text-3xl ${
-              !heimIstWir ? 'text-white' : 'text-white/60'
-            }`}
-          >
-            {spiel.gast.name}
-          </span>
+          <TeamAnzeige team={spiel.gast} eigen={!heimIstWir} rechts />
         </div>
+
+        {(istKurz(spiel.heim.kuerzel) || istKurz(spiel.gast.kuerzel)) && (
+          <p className="mt-3 text-sm text-white/60">
+            {spiel.heim.name} – {spiel.gast.name}
+          </p>
+        )}
 
         <div className="mt-6 flex flex-wrap items-center gap-x-5 gap-y-2 border-t border-white/10 pt-4">
           {ergebnis && (

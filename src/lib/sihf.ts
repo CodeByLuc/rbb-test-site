@@ -617,3 +617,37 @@ export async function holeClubSpiele(keyId: string, revalidate = 300): Promise<S
     return []
   }
 }
+
+/**
+ * Offizielle Teamkürzel eines Spiels (z. B. "EHCRB", "HCW"). Weder die
+ * Club-Schnittstelle noch die Statistik-API liefern sie zuverlässig, die
+ * Spielseite auf sihf.ch aber schon. Einen Tag zwischengespeichert; fehlt die
+ * Seite oder ändert sich ihr Aufbau, gibt es einfach keine Kürzel.
+ */
+export async function holeSpielKuerzel(
+  gameId: string,
+): Promise<{ heim: string; gast: string } | null> {
+  if (!/^\d+$/.test(gameId)) return null
+  try {
+    const antwort = await fetch(SIHF_SPIEL_URL(gameId), { next: { revalidate: 86400 } })
+    if (!antwort.ok) return null
+    const html = await antwort.text()
+    const kuerzel = [
+      ...html.matchAll(/c-game-detail-header__team-acronym">\s*([^<]{1,12}?)\s*</g),
+    ].map((treffer) => treffer[1].replace(/&amp;/g, '&'))
+    return kuerzel.length >= 2 ? { heim: kuerzel[0], gast: kuerzel[1] } : null
+  } catch {
+    return null
+  }
+}
+
+/** Ergänzt ein Spiel um die offiziellen Teamkürzel, sofern verfügbar. */
+export async function mitKuerzeln(spiel: SihfSpiel): Promise<SihfSpiel> {
+  const kuerzel = spiel.gameId ? await holeSpielKuerzel(spiel.gameId) : null
+  if (!kuerzel) return spiel
+  return {
+    ...spiel,
+    heim: { ...spiel.heim, kuerzel: kuerzel.heim },
+    gast: { ...spiel.gast, kuerzel: kuerzel.gast },
+  }
+}

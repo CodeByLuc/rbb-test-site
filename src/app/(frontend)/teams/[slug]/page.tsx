@@ -10,7 +10,7 @@ import { SpielerFoto } from '../../../../components/SpielerFoto'
 import { Tabelle } from '../../../../components/Tabelle'
 import { TeamKompakt } from '../../../../components/TeamKompakt'
 import { holePosts, holeTeam, holeTeams, holeTeamSpielplanMitFallback } from '../../../../lib/daten'
-import { holeTeamSpielplan, saisonAlias } from '../../../../lib/sihf'
+import { holeTeamSpielplan, mitKuerzeln, saisonAlias } from '../../../../lib/sihf'
 
 export const revalidate = 300
 
@@ -63,6 +63,8 @@ export default async function TeamSeite({ params }: Props) {
   const anzeige = plan.spiele.length > 0 ? plan : vorsaison
   const istVorsaison = plan.spiele.length === 0 && (vorsaison?.spiele.length ?? 0) > 0
   const eigenerName = team.sihfTeamName || 'Rot-Blau'
+  // Die Kachel «Letztes Spiel» ist schmal: mit den offiziellen Kürzeln passt sie.
+  const letztesSpiel = anzeige?.letztes ? await mitKuerzeln(anzeige.letztes) : null
 
   const spieler = team.spieler ?? []
   const trainer = team.trainer ?? []
@@ -136,7 +138,7 @@ export default async function TeamSeite({ params }: Props) {
                 <NaechstesSpiel spiel={anzeige.naechste[0]} eigenerName={eigenerName} />
               )}
               {anzeige.letztes && (
-                <LetztesResultat spiel={anzeige.letztes} eigenerName={eigenerName} />
+                <LetztesResultat spiel={letztesSpiel ?? anzeige.letztes} eigenerName={eigenerName} />
               )}
             </div>
           </>
