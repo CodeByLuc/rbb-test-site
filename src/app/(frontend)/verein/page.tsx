@@ -8,12 +8,11 @@ export const revalidate = 300
 
 export const metadata: Metadata = {
   title: 'Verein',
-  description: 'Geschichte, Vorstand und Mitgliedschaft beim EHC Rot-Blau Bern-Bümpliz.',
+  description: 'Geschichte und Mitgliedschaft beim EHC Rot-Blau Bern-Bümpliz.',
 }
 
 export default async function VereinSeite() {
   const verein = await holeGlobal('verein')
-  const vorstand = verein.vorstand ?? []
   const bilder = verein.historischeBilder ?? []
 
   const dokument = (wert: unknown) =>
@@ -63,40 +62,6 @@ export default async function VereinSeite() {
           </section>
         )}
 
-        {vorstand.length > 0 && (
-          <section>
-            <h2 className="abschnittstitel mb-5 text-4xl text-nacht sm:text-6xl">Vorstand</h2>
-            <div className="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
-              {vorstand.map((person, index) => (
-                <article
-                  key={person.id ?? index}
-                  className="kachel flex items-center gap-4 bg-white p-5 shadow-sm"
-                >
-                  <Bild
-                    bild={person.foto}
-                    groesse="thumbnail"
-                    className="h-20 w-20 shrink-0 rounded-full object-cover"
-                    sizes="80px"
-                  />
-                  <div className="min-w-0">
-                    <p className="font-display text-lg text-nacht uppercase">{person.name}</p>
-                    <p className="text-sm text-rot">{person.funktion}</p>
-                    {person.email && (
-                      <a
-                        href={`mailto:${person.email}`}
-                        className="block truncate text-xs text-grau hover:text-rot-dunkel hover:underline"
-                      >
-                        {person.email}
-                      </a>
-                    )}
-                    {person.telefon && <p className="text-xs text-grau">{person.telefon}</p>}
-                  </div>
-                </article>
-              ))}
-            </div>
-          </section>
-        )}
-
         {(verein.mitgliedschaft || anmeldeformular || statuten) && (
           <section className="kachel bg-blau p-6 text-white shadow-sm sm:p-8">
             <h2 className="abschnittstitel mb-4 text-4xl sm:text-6xl">Mitglied werden</h2>
@@ -130,7 +95,7 @@ export default async function VereinSeite() {
           </section>
         )}
 
-        {!verein.geschichte && !verein.aktuell && vorstand.length === 0 && (
+        {!verein.geschichte && !verein.aktuell && (
           <p className="kachel bg-white p-8 text-grau shadow-sm">
             Die Inhalte dieser Seite werden im Redaktionsbereich unter «Seite Verein» erfasst.
           </p>

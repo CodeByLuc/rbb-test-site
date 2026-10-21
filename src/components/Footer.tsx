@@ -53,6 +53,7 @@ export function Footer({ einstellungen }: { einstellungen: Einstellungen }) {
             {[
               { titel: 'Teams', pfad: '/teams' },
               { titel: 'Verein', pfad: '/verein' },
+              { titel: 'Vorstand', pfad: '/vorstand' },
               { titel: 'Sponsoren', pfad: '/sponsoren' },
             ].map((eintrag) => (
               <li key={eintrag.pfad}>
@@ -90,7 +91,10 @@ export function Footer({ einstellungen }: { einstellungen: Einstellungen }) {
       </div>
 
       <div className="border-t border-white/10 py-5 text-center text-xs text-white/45">
-        © {jahr} {einstellungen.vereinsname} · Spielpläne und Resultate: Swiss Ice Hockey Federation
+        © {jahr} {einstellungen.vereinsname} · Spielpläne und Resultate: Swiss Ice Hockey Federation ·{' '}
+        <Link className="underline hover:text-rot" href="/impressum">
+          Impressum &amp; Datenschutz
+        </Link>
       </div>
     </footer>
   )
