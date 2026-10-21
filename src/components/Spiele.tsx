@@ -43,33 +43,59 @@ function AusgangMarke({ ergebnis }: { ergebnis: Ausgang }) {
   )
 }
 
-/** Eine Zeile pro Spiel, dunkel wie eine Anzeigetafel. */
-export function SpielZeile({ spiel, eigenerName }: { spiel: SihfSpiel; eigenerName: string }) {
+/** Eine Zeile pro Spiel: Datum, Gegner (mit Heim/Auswärts und Halle), Resultat. */
+export function SpielZeile({
+  spiel,
+  eigenerName,
+  naechstes = false,
+}: {
+  spiel: SihfSpiel
+  eigenerName: string
+  naechstes?: boolean
+}) {
   const ergebnis = ausgang(spiel, eigenerName)
   const heimIstWir = istEigenes(spiel.heim.name, eigenerName)
+  const gegner = heimIstWir ? spiel.gast.name : spiel.heim.name
+  // Resultate aus Sicht des Teams: eigene Tore zuerst, dazu S/N – so gibt es
+  // beim Auswärtsspiel nichts zu übersetzen.
+  const eigene = heimIstWir ? spiel.toreHeim : spiel.toreGast
+  const fremde = heimIstWir ? spiel.toreGast : spiel.toreHeim
 
   return (
-    <li className="grid grid-cols-[auto_1fr_auto] items-center gap-x-4 gap-y-1 border-b border-white/10 px-4 py-3 transition-colors last:border-0 hover:bg-white/5 sm:grid-cols-[7.5rem_1fr_auto_auto]">
-      <div className="font-display text-base tracking-wide text-white/60 uppercase">
-        <span className="text-rot">{spiel.wochentag}</span> {spiel.datum}
-        <span className="ml-2 font-sans text-xs text-white/40">{spiel.zeit}</span>
+    <li
+      className={`grid grid-cols-[4.5rem_1fr_auto] items-center gap-x-4 border-b border-white/10 px-4 py-3.5 transition-colors last:border-0 hover:bg-white/5 sm:grid-cols-[5.5rem_1fr_auto_4.5rem] sm:px-5 ${
+        naechstes ? 'bg-white/8' : ''
+      }`}
+    >
+      <div>
+        <p className="font-display text-xl leading-none tracking-wide text-white">
+          {spiel.datum.slice(0, 6)}
+        </p>
+        <p className="mt-1 text-xs text-white/55">
+          {spiel.wochentag}
+          {spiel.zeit && <> · {spiel.zeit}</>}
+        </p>
       </div>
 
-      <div className="col-span-2 min-w-0 font-display text-lg leading-tight uppercase sm:col-span-1">
-        <span className={heimIstWir ? 'text-white' : 'text-white/55'}>{spiel.heim.name}</span>
-        <span className="mx-2 text-white/25">gegen</span>
-        <span className={!heimIstWir ? 'text-white' : 'text-white/55'}>{spiel.gast.name}</span>
+      <div className="min-w-0">
+        <p className="font-display text-xl leading-tight tracking-wide text-white uppercase">
+          {gegner}
+        </p>
+        <p className="mt-0.5 text-xs text-white/55">
+          {heimIstWir ? 'Heimspiel' : 'Auswärtsspiel'}
+          {spiel.ort && <> · {spiel.ort}</>}
+        </p>
       </div>
 
-      <div className="flex items-center gap-3">
+      <div className="flex items-center justify-end gap-3">
         {spiel.abgesagt ? (
           <span className="knopf bg-white/15 px-2 py-1 font-display text-sm tracking-wide uppercase">
             Abgesagt
           </span>
         ) : spiel.gespielt ? (
           <>
-            <span className="tafelzahl text-2xl text-white">
-              {spiel.toreHeim}:{spiel.toreGast}
+            <span className="tafelzahl text-3xl text-white">
+              {eigene}:{fremde}
             </span>
             {spiel.entscheidung && (
               <span className="font-display text-xs tracking-wider text-rot uppercase">
@@ -78,22 +104,28 @@ export function SpielZeile({ spiel, eigenerName }: { spiel: SihfSpiel; eigenerNa
             )}
             {ergebnis && <AusgangMarke ergebnis={ergebnis} />}
           </>
+        ) : naechstes ? (
+          <span className="etikett bg-rot px-2.5 py-1 font-display text-xs tracking-[0.15em] uppercase">
+            Nächstes
+          </span>
         ) : (
-          <span className="font-display text-sm tracking-wide text-white/45 uppercase">
-            steht an
+          <span className="font-display text-sm tracking-wide text-white/55 uppercase">
+            {heimIstWir ? 'Heim' : 'Auswärts'}
           </span>
         )}
       </div>
 
-      {spiel.gameId && (
+      {spiel.gameId ? (
         <a
           href={SIHF_SPIEL_URL(spiel.gameId)}
           target="_blank"
           rel="noopener noreferrer"
-          className="hidden font-display text-xs tracking-widest text-white/40 uppercase hover:text-rot sm:block"
+          className="hidden text-right font-display text-xs tracking-widest text-white/45 uppercase hover:text-rot sm:block"
         >
-          Details
+          Details ↗
         </a>
+      ) : (
+        <span className="hidden sm:block" />
       )}
     </li>
   )
@@ -110,17 +142,17 @@ export function SpielListe({
   eigenerName: string
   leerText?: string
 }) {
+  const naechstesIndex = spiele.findIndex((s) => !s.gespielt && !s.abgesagt)
+
   return (
     <section className="kachel overflow-hidden bg-nacht text-white shadow-xl">
-      <div className="flex items-baseline justify-between gap-4 bg-nacht-tief px-4 py-3">
-        <h2 className="text-xl sm:text-2xl">{titel}</h2>
-        <span className="font-display text-xs tracking-widest text-white/40 uppercase">
-          Swiss Ice Hockey
-        </span>
+      <div className="flex flex-wrap items-baseline justify-between gap-x-4 gap-y-1 bg-nacht-tief px-5 py-4">
+        <h2 className="text-2xl">{titel}</h2>
+        <span className="text-xs text-white/50">Resultate aus Sicht des Teams</span>
       </div>
       <div className="trikotband-schmal" />
       {spiele.length === 0 ? (
-        <p className="px-4 py-8 text-sm text-white/60">{leerText}</p>
+        <p className="px-5 py-8 text-sm text-white/60">{leerText}</p>
       ) : (
         <ul>
           {spiele.map((spiel, index) => (
@@ -128,6 +160,7 @@ export function SpielListe({
               key={spiel.gameId ?? `${spiel.datum}-${index}`}
               spiel={spiel}
               eigenerName={eigenerName}
+              naechstes={index === naechstesIndex}
             />
           ))}
         </ul>

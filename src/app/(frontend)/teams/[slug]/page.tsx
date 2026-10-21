@@ -143,6 +143,39 @@ export default async function TeamSeite({ params }: Props) {
         )}
       </div>
 
+      {/*
+        Tabelle und Spielplan über die volle Breite: in der schmalen Seitenspalte
+        waren sie zu eng zum Lesen. Auf dem Telefon steht oben die Kurzübersicht.
+      */}
+      {team.sihfLeagueId && anzeige && (
+        <div className="inhalt hidden gap-6 pt-8 lg:grid xl:grid-cols-[3fr_2fr] xl:items-start">
+          {istVorsaison && (
+            <p className="kachel bg-white px-5 py-3 text-sm text-nacht shadow-sm xl:col-span-2">
+              <strong>Hinweis:</strong> Für die neue Saison sind noch keine Spiele angesetzt. Es
+              folgen Tabelle und Spielplan der letzten Saison.
+            </p>
+          )}
+
+          <SpielListe
+            titel={istVorsaison ? 'Spiele der letzten Saison' : 'Spielplan und Resultate'}
+            spiele={anzeige.spiele}
+            eigenerName={eigenerName}
+            leerText="Die Spiele erscheinen hier, sobald Swiss Ice Hockey den Spielplan veröffentlicht."
+          />
+
+          {anzeige.tabelle.length > 0 && (
+            <div className="xl:sticky xl:top-28">
+              <Tabelle
+                zeilen={anzeige.tabelle}
+                eigenerName={eigenerName}
+                titel={`Tabelle${team.liga ? ` – ${team.liga}` : ''}`}
+                tabellenUrl={team.tabellenUrl}
+              />
+            </div>
+          )}
+        </div>
+      )}
+
       <div className="inhalt grid gap-10 py-10 lg:grid-cols-[2fr_1fr]">
         <div className="space-y-10">
           {/* Trainer & Betreuung – direkt unter dem Teamfoto, das Kader fürs
@@ -232,38 +265,6 @@ export default async function TeamSeite({ params }: Props) {
         </div>
 
         <aside className="space-y-6">
-          {/*
-            Tabelle und Spielplan brauchen Breite. Auf dem Telefon steht oben
-            die Kurzübersicht, hier erscheinen sie erst, wenn sie auch lesbar
-            sind – sonst scrollt man nur an Zahlenkolonnen vorbei.
-          */}
-          {team.sihfLeagueId && anzeige && (
-            <div className="hidden space-y-4 lg:block">
-              {istVorsaison && (
-                <p className="kachel border-l-4 border-rot bg-white px-4 py-3 text-sm text-nacht shadow-sm">
-                  Für die neue Saison sind noch keine Spiele angesetzt. Es folgen Tabelle und
-                  Spielplan der letzten Saison.
-                </p>
-              )}
-
-              {anzeige.tabelle.length > 0 && (
-                <Tabelle
-                  zeilen={anzeige.tabelle}
-                  eigenerName={eigenerName}
-                  titel={`Tabelle${team.liga ? ` – ${team.liga}` : ''}`}
-                  tabellenUrl={team.tabellenUrl}
-                />
-              )}
-
-              <SpielListe
-                titel={istVorsaison ? 'Spiele der letzten Saison' : 'Spielplan und Resultate'}
-                spiele={anzeige.spiele}
-                eigenerName={eigenerName}
-                leerText="Die Spiele erscheinen hier, sobald Swiss Ice Hockey den Spielplan veröffentlicht."
-              />
-            </div>
-          )}
-
           {trainings.length > 0 && (
             <div className="kachel bg-nacht text-white shadow-xl">
               <h2 className="bg-nacht-tief px-5 py-3 text-xl">Trainingszeiten</h2>
