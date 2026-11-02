@@ -10,10 +10,14 @@ import { useSpielStand } from './useSpielStand'
  *
  * Läuft das Spiel des Teams gerade (oder ging es eben zu Ende), steht es
  * mit dem aktuellen Resultat an der Stelle des letzten Spiels, und als
- * nächstes Spiel rückt das darauffolgende nach. Auf dem Telefon erscheint
- * dasselbe in der Kurzübersicht.
+ * nächstes Spiel rückt das darauffolgende nach.
+ *
+ * `ansicht="kompakt"` ist die Kurzübersicht fürs Telefon (direkt unter dem
+ * Foto), `ansicht="karten"` die beiden grossen Karten in der rechten Spalte.
  */
 export function TeamSpieleLive({
+  ansicht,
+  className = '',
   tabelle,
   letztes,
   naechste,
@@ -22,6 +26,8 @@ export function TeamSpieleLive({
   liga,
   tabellenLink,
 }: {
+  ansicht: 'kompakt' | 'karten'
+  className?: string
   tabelle: TabellenZeile[]
   letztes: SihfSpiel | null
   naechste: SihfSpiel[]
@@ -40,8 +46,8 @@ export function TeamSpieleLive({
   const anzeige = aktuell ?? letztes
   const naechstes = naechste.find((spiel) => !aktuell || spiel.gameId !== aktuell.gameId) ?? null
 
-  return (
-    <>
+  if (ansicht === 'kompakt') {
+    return (
       <TeamKompakt
         tabelle={tabelle}
         letztes={anzeige}
@@ -51,20 +57,18 @@ export function TeamSpieleLive({
         tabellenLink={tabellenLink}
         live={live}
         periode={stand?.periode}
-        className="lg:hidden"
+        className={className}
       />
+    )
+  }
 
-      <div className="hidden gap-5 lg:grid lg:content-start">
-        {naechstes && <NaechstesSpiel spiel={naechstes} eigenerName={eigenerName} />}
-        {anzeige && (
-          <LetztesResultat
-            spiel={anzeige}
-            eigenerName={eigenerName}
-            live={live}
-            periode={stand?.periode}
-          />
-        )}
-      </div>
-    </>
+  if (!naechstes && !anzeige) return null
+  return (
+    <div className={`gap-5 ${className}`}>
+      {naechstes && <NaechstesSpiel spiel={naechstes} eigenerName={eigenerName} />}
+      {anzeige && (
+        <LetztesResultat spiel={anzeige} eigenerName={eigenerName} live={live} periode={stand?.periode} />
+      )}
+    </div>
   )
 }

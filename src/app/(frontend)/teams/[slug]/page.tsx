@@ -79,6 +79,17 @@ export default async function TeamSeite({ params }: Props) {
   const letztesSpiel = anzeige?.letztes ? await mitKuerzeln(anzeige.letztes) : null
   // Läuft gerade ein Spiel (oder beginnt es bald), holt die Seite im Browser den Live-Stand.
   const kandidat = istVorsaison ? null : liveKandidat(plan.spiele)
+  const mitSpielen =
+    !!anzeige && !!(anzeige.naechste[0] || anzeige.letztes || kandidat || anzeige.tabelle.length > 0)
+  const spielDaten = {
+    tabelle: anzeige?.tabelle ?? [],
+    letztes: letztesSpiel ?? anzeige?.letztes ?? null,
+    naechste: anzeige?.naechste ?? [],
+    kandidat,
+    eigenerName,
+    liga: team.liga,
+    tabellenLink,
+  }
 
   const spieler = team.spieler ?? []
   const trainer = team.trainer ?? []
@@ -118,44 +129,30 @@ export default async function TeamSeite({ params }: Props) {
       </div>
 
       {/*
-        Aufbau nach der Skizze: oben das Teamfoto gross, daneben die beiden
-        Partien. Darunter links der Kader, rechts die Tabelle.
+        Zwei durchgehende Spalten: links Teamfoto, Trainer, Kader und News,
+        rechts Spiele, Tabelle und Trainingszeiten. So hängt der Abstand unter
+        dem Foto nicht davon ab, wie hoch die Spielkarten daneben sind – er ist
+        bei jedem Team gleich. Auf dem Telefon folgt die Kurzübersicht direkt
+        auf das Foto.
       */}
-      <div className="inhalt grid gap-6 pt-6 lg:grid-cols-[2fr_1fr] lg:gap-8">
-        {/*
-          self-start: Sonst zieht das Grid die Kachel auf die Höhe der
-          Spielkarten daneben, und unter dem Foto bleibt ein leerer
-          dunkelblauer Balken stehen. So endet die Kachel genau mit dem Bild.
-        */}
-        {teamfoto && (
-          <div className="kachel relative self-start overflow-hidden shadow-xl">
-            <Bild
-              bild={team.teamfoto}
-              groesse="hero"
-              priority
-              className="block h-auto w-full"
-              sizes="(max-width: 1024px) 100vw, 60vw"
-            />
-          </div>
-        )}
-
-        {/* Letztes und nächstes Spiel (mit Live-Stand) – auf dem Telefon als Kurzübersicht. */}
-        {anzeige &&
-          (anzeige.naechste[0] || anzeige.letztes || kandidat || anzeige.tabelle.length > 0) && (
-            <TeamSpieleLive
-              tabelle={anzeige.tabelle}
-              letztes={letztesSpiel ?? anzeige.letztes}
-              naechste={anzeige.naechste}
-              kandidat={kandidat}
-              eigenerName={eigenerName}
-              liga={team.liga}
-              tabellenLink={tabellenLink}
-            />
+      <div className="inhalt grid gap-10 pt-6 pb-10 lg:grid-cols-[3fr_2fr] lg:gap-8">
+        <div className="min-w-0 space-y-10">
+          {teamfoto && (
+            <div className="kachel relative overflow-hidden shadow-xl">
+              <Bild
+                bild={team.teamfoto}
+                groesse="hero"
+                priority
+                className="block h-auto w-full"
+                sizes="(max-width: 1024px) 100vw, 60vw"
+              />
+            </div>
           )}
-      </div>
 
-      <div className="inhalt grid gap-10 py-10 lg:grid-cols-[3fr_2fr]">
-        <div className="space-y-10">
+          {mitSpielen && (
+            <TeamSpieleLive ansicht="kompakt" className="lg:hidden" {...spielDaten} />
+          )}
+
           {/* Trainer & Betreuung – direkt unter dem Teamfoto, das Kader fürs
               Gesicht nach aussen ist die Betreuung. */}
           {trainer.length > 0 && (
@@ -230,7 +227,6 @@ export default async function TeamSeite({ params }: Props) {
           )}
 
           {posts.length > 0 && (
-
             <section>
               <h2 className="abschnittstitel mb-5 text-4xl text-nacht">News zu diesem Team</h2>
               <div className="grid gap-6 sm:grid-cols-2">
@@ -243,6 +239,11 @@ export default async function TeamSeite({ params }: Props) {
         </div>
 
         <aside className="space-y-6">
+          {/* Letztes und nächstes Spiel mit Live-Stand. */}
+          {mitSpielen && (
+            <TeamSpieleLive ansicht="karten" className="hidden lg:grid" {...spielDaten} />
+          )}
+
           {/*
             Auf dem Telefon steht oben die Kurzübersicht (Rang, letztes und
             nächstes Spiel); die ganze Tabelle erscheint erst, wenn sie lesbar ist.
@@ -282,7 +283,6 @@ export default async function TeamSeite({ params }: Props) {
               </ul>
             </div>
           )}
-
         </aside>
       </div>
     </>
