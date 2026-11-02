@@ -56,6 +56,15 @@ function hinweis(titel: string, inhalt: string, status: number) {
 
 const TAG_MS = 24 * 60 * 60 * 1000
 
+/** Titel, den der frühere Montags-Job für die Woche bis zu diesem Sonntag vergab. */
+function alterTitel(woche: { bis: Date }) {
+  const tagMonat = (datum: Date) =>
+    `${String(datum.getUTCDate()).padStart(2, '0')}.${String(datum.getUTCMonth() + 1).padStart(2, '0')}.`
+  const sonntag = new Date(woche.bis.getTime() - TAG_MS)
+  const montag = new Date(woche.bis.getTime() - 7 * TAG_MS)
+  return `Resultate der Woche: ${tagMonat(montag)} – ${tagMonat(sonntag)}${sonntag.getUTCFullYear()}`
+}
+
 /**
  * Erstellt den Wochenrückblick: einen kurzen Blog-Beitrag mit den Resultaten
  * aller Teams von Montag bis Sonntag.
@@ -70,6 +79,8 @@ const TAG_MS = 24 * 60 * 60 * 1000
  *   &vorschau=1   – zeigt, was erstellt würde, ohne etwas zu speichern
  *   &stichtag=2026-11-01  – nimmt die Woche, die am letzten Sonntag bis zu diesem Datum endet
  *   &von=2026-10-30  – beginnt erst an diesem Tag, z. B. nur das Wochenende (Freitag bis Sonntag)
+ *   &nur=2026-11-02  – läuft nur an diesem Tag (Schweizer Datum), sonst passiert nichts;
+ *                      für einmalige Läufe über einen Eintrag in vercel.json
  */
 export async function GET(anfrage: NextRequest) {
   const params = anfrage.nextUrl.searchParams
@@ -90,6 +101,13 @@ export async function GET(anfrage: NextRequest) {
           `<p>In diesem Browser bist du nicht im Redaktionsbereich eingeloggt.</p><ol><li><a href="/admin" target="_blank" rel="noopener">Redaktionsbereich öffnen und einloggen</a> (neuer Tab)</li><li>Danach diese Seite hier neu laden.</li></ol>`,
           401,
         )
+  }
+
+  // Einmaliger geplanter Lauf: an jedem anderen Tag nichts tun.
+  const nur = params.get('nur')
+  const heute = new Intl.DateTimeFormat('en-CA', { timeZone: 'Europe/Zurich' }).format(new Date())
+  if (nur && nur !== heute) {
+    return NextResponse.json({ angelegt: false, grund: `Läuft nur am ${nur}, heute ist ${heute}.` })
   }
 
   const stichtagText = params.get('stichtag')
@@ -148,9 +166,16 @@ export async function GET(anfrage: NextRequest) {
     }
 
     // Läuft der Job zweimal, wird der bestehende Beitrag aktualisiert statt verdoppelt.
+    // Gleiches gilt für den Beitrag des früheren Montags-Jobs zur selben Woche
+    // («Resultate der Woche: 26.10. – 01.11.2026») – er wird ersetzt.
     const { docs: vorhanden } = await payload.find({
       collection: 'posts',
-      where: { and: [{ typ: { equals: 'resultate' } }, { titel: { equals: titel } }] },
+      where: {
+        and: [
+          { typ: { equals: 'resultate' } },
+          { or: [{ titel: { equals: titel } }, { titel: { equals: alterTitel(woche) } }] },
+        ],
+      },
       limit: 1,
       depth: 0,
     })
