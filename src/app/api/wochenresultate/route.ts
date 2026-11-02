@@ -1,7 +1,7 @@
 import configPromise from '@payload-config'
 import { revalidatePath } from 'next/cache'
 import { type NextRequest, NextResponse } from 'next/server'
-import { getPayload } from 'payload'
+import { getPayload, type Payload } from 'payload'
 
 import {
   alsListe,
@@ -16,6 +16,27 @@ export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 /**
+ * Vercel schickt den Cron-Auftrag mit dem Geheimschlüssel im
+ * Authorization-Header; von Hand geht es mit `?secret=`. Wer im
+ * Redaktionsbereich als Administrator eingeloggt ist, braucht keinen Schlüssel.
+ */
+async function berechtigt(anfrage: NextRequest, payload: Payload): Promise<boolean> {
+  const erwartet = process.env.CRON_SECRET
+  const kopfGeheimnis = anfrage.headers.get('authorization')?.replace('Bearer ', '')
+  const uebergeben = anfrage.nextUrl.searchParams.get('secret') ?? kopfGeheimnis
+  if (erwartet && uebergeben === erwartet) return true
+
+  try {
+    const { user } = await payload.auth({ headers: anfrage.headers })
+    return (user as { role?: string } | null)?.role === 'admin'
+  } catch {
+    return false
+  }
+}
+
+const TAG_MS = 24 * 60 * 60 * 1000
+
+/**
  * Erstellt den Wochenrückblick: einen kurzen Blog-Beitrag mit den Resultaten
  * aller Teams von Montag bis Sonntag.
  *
@@ -23,20 +44,18 @@ export const maxDuration = 60
  * Schweizer Winterzeit) und kann jederzeit von Hand ausgelöst werden:
  *
  *   GET /api/wochenresultate?secret=<CRON_SECRET>
+ *   (oder ohne secret, wenn man im Redaktionsbereich als Admin eingeloggt ist)
  *
- * Zusatzparameter zum Testen:
+ * Zusatzparameter:
  *   &vorschau=1   – zeigt, was erstellt würde, ohne etwas zu speichern
- *   &stichtag=2026-02-01  – nimmt die Woche, die am letzten Sonntag bis zu diesem Datum endet
+ *   &stichtag=2026-11-01  – nimmt die Woche, die am letzten Sonntag bis zu diesem Datum endet
+ *   &von=2026-10-30  – beginnt erst an diesem Tag, z. B. nur das Wochenende (Freitag bis Sonntag)
  */
 export async function GET(anfrage: NextRequest) {
   const params = anfrage.nextUrl.searchParams
-  const erwartet = process.env.CRON_SECRET
+  const payload = await getPayload({ config: await configPromise })
 
-  // Vercel schickt den Cron-Auftrag mit einem Authorization-Header.
-  const kopfGeheimnis = anfrage.headers.get('authorization')?.replace('Bearer ', '')
-  const uebergeben = params.get('secret') ?? kopfGeheimnis
-
-  if (!erwartet || uebergeben !== erwartet) {
+  if (!(await berechtigt(anfrage, payload))) {
     return NextResponse.json({ fehler: 'Nicht berechtigt' }, { status: 401 })
   }
 
@@ -49,8 +68,19 @@ export async function GET(anfrage: NextRequest) {
   const nurVorschau = params.get('vorschau') === '1'
   const woche = spielwoche(stichtag)
 
+  const vonText = params.get('von')
+  if (vonText) {
+    const von = /^\d{4}-\d{2}-\d{2}$/.test(vonText) ? new Date(`${vonText}T00:00:00Z`) : null
+    if (!von || Number.isNaN(von.getTime()) || von >= woche.bis || woche.bis.getTime() - von.getTime() > 31 * TAG_MS) {
+      return NextResponse.json(
+        { fehler: '«von» muss ein Datum (JJJJ-MM-TT) höchstens einen Monat vor dem Sonntag sein' },
+        { status: 400 },
+      )
+    }
+    woche.von = von
+  }
+
   try {
-    const payload = await getPayload({ config: await configPromise })
     const wochen = await sammleWoche(payload, woche)
     const resultate = alsListe(wochen)
 

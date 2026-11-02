@@ -633,6 +633,8 @@ export type SpielStand = {
   toreGast: number | null
   /** Drittelresultate aus Sicht Heim:Gast, z. B. ["1:3", "0:1"]. */
   drittel: string[]
+  /** "OT" nach Verlängerung, "SO" nach Penaltyschiessen, sonst leer. */
+  entscheidung: string
   kuerzel: { heim: string; gast: string } | null
 }
 
@@ -661,6 +663,10 @@ function spielStandAusHtml(gameId: string, html: string): SpielStand | null {
   const block = html.match(/c-game-detail-header__score"[\s\S]*?<\/div>/)?.[0] ?? ''
   const tore = [...block.matchAll(/__score-value">\s*(\d+)\s*</g)].map((treffer) => Number(treffer[1]))
   const hatTore = zustand !== 'geplant' && tore.length >= 2
+  // Zusatzabschnitte tragen eine Marke: "OT" (Verlängerung) oder "SO" (Penaltyschiessen).
+  const marken = [...html.matchAll(/c-game-detail-header__period-label">\s*([A-Z]+)\s*</g)].map(
+    (treffer) => treffer[1],
+  )
 
   return {
     gameId,
@@ -672,6 +678,7 @@ function spielStandAusHtml(gameId: string, html: string): SpielStand | null {
     drittel: [...html.matchAll(/c-game-detail-header__period">\s*<span>\s*(\d+:\d+)\s*</g)].map(
       (treffer) => treffer[1],
     ),
+    entscheidung: marken.includes('SO') ? 'SO' : marken.includes('OT') ? 'OT' : '',
     kuerzel: kuerzel.length >= 2 ? { heim: kuerzel[0], gast: kuerzel[1] } : null,
   }
 }
@@ -745,6 +752,7 @@ export function mitStand(spiel: SihfSpiel, stand: SpielStand | null): SihfSpiel 
     toreGast: stand.toreGast,
     gespielt: stand.zustand === 'beendet',
     status: stand.periode,
+    entscheidung: stand.entscheidung || spiel.entscheidung,
     drittelHeim: drittel.map((teil) => teil[0]),
     drittelGast: drittel.map((teil) => teil[1]),
     heim: stand.kuerzel ? { ...spiel.heim, kuerzel: stand.kuerzel.heim } : spiel.heim,
@@ -753,6 +761,104 @@ export function mitStand(spiel: SihfSpiel, stand: SpielStand | null): SihfSpiel 
 }
 
 const GAME_CENTER = 'https://www.sihf.ch/de/game-center'
+
+/** Wandelt HTML-Zeichen wie "&#xFC;" zurück in Text. */
+const htmlText = (roh: string) =>
+  roh
+    .replace(/&#x([0-9a-f]+);/gi, (_, hex: string) => String.fromCodePoint(parseInt(hex, 16)))
+    .replace(/&#(\d+);/g, (_, zahl: string) => String.fromCodePoint(Number(zahl)))
+    .replace(/&quot;/g, '"')
+    .replace(/&apos;/g, "'")
+    .replace(/&lt;/g, '<')
+    .replace(/&gt;/g, '>')
+    .replace(/&amp;/g, '&')
+    .trim()
+
+/**
+ * Kompletter Spielplan eines Teams in der laufenden Saison, direkt von der
+ * Spielplanseite auf sihf.ch (`game-center/team/spielplan/<Liga>-<Region>-<Team>`).
+ *
+ * Anders als die Statistik-API und die Club-Schnittstelle stehen dort alle
+ * Spiele, auch Testspiele, jeweils mit Phase («Regular Season Gr. 2»,
+ * «Exhibition Games»), Resultat und Live-Kennzeichen. Die Region in der
+ * Adresse ist egal, sihf.ch leitet auf die richtige weiter. Leer, wenn die
+ * Seite fehlt oder sich ihr Aufbau ändert.
+ */
+export async function holeSihfTeamSpiele(
+  ligaId?: string | number | null,
+  teamId?: string | number | null,
+  revalidate = 300,
+): Promise<SihfSpiel[]> {
+  const liga = String(ligaId ?? '').trim()
+  const team = String(teamId ?? '').trim()
+  if (!/^\d+$/.test(liga) || !/^\d+$/.test(team)) return []
+
+  try {
+    const antwort = await fetch(`${GAME_CENTER}/team/spielplan/${liga}-1-${team}`, {
+      ...(revalidate > 0 ? { next: { revalidate } } : { cache: 'no-store' as RequestCache }),
+    })
+    if (!antwort.ok) return []
+    const html = await antwort.text()
+
+    const karten = [
+      ...html.matchAll(
+        /<a href="[^"]*\/game\/(\d+)"[^>]*data-home-team-id="(\d*)"[^>]*data-away-team-id="(\d*)"[^>]*data-is-live="(true|false)"[^>]*>/g,
+      ),
+    ]
+
+    return karten.flatMap((karte, i): SihfSpiel[] => {
+      const start = karte.index ?? 0
+      const inhalt = html.slice(start, karten[i + 1]?.index ?? html.length)
+      // Jedes Spiel steht unter seinem Spieltag: data-date="2026-10-30"
+      const tagStart = html.lastIndexOf('data-date="', start)
+      const tag = html.slice(tagStart, tagStart + 22).match(/data-date="(\d{4})-(\d{2})-(\d{2})"/)
+      if (tagStart < 0 || !tag) return []
+      const [, j, m, t] = tag
+
+      const feld = (name: string) =>
+        htmlText(inhalt.match(new RegExp(`c-game-preview__${name}">([^<]*)<`))?.[1] ?? '')
+      const namen = [...inhalt.matchAll(/c-game-preview__team-name">([^<]*)</g)].map((n) => htmlText(n[1]))
+      // Vor dem Spiel steht "-" statt der Tore.
+      const tore = [...inhalt.matchAll(/c-game-preview__team-score">([^<]*)</g)].map((n) => {
+        const wert = htmlText(n[1])
+        return /^\d+$/.test(wert) ? Number(wert) : null
+      })
+      if (namen.length < 2) return []
+
+      const live = karte[4] === 'true'
+      const zeit = feld('time')
+      const anspiel = /^\d{1,2}:\d{2}$/.test(zeit) ? zeit : ''
+      const status = feld('status')
+      const phase = feld('phase-name')
+      const toreHeim = tore[0] ?? null
+      const toreGast = tore[1] ?? null
+
+      return [
+        {
+          gameId: karte[1],
+          wochentag: wochentage[new Date(Date.UTC(+j, +m - 1, +t)).getUTCDay()] ?? '',
+          datum: `${t}.${m}.${j}`,
+          zeit: anspiel,
+          zeitpunkt: anspiel ? zuercherZeitpunkt(`${j}.${m}.${t}`, anspiel) : null,
+          heim: { id: Number(karte[2]) || null, name: namen[0], kuerzel: null },
+          gast: { id: Number(karte[3]) || null, name: namen[1], kuerzel: null },
+          toreHeim,
+          toreGast,
+          gespielt: !live && toreHeim !== null && toreGast !== null,
+          abgesagt: /abgesagt|verschoben|cancel/i.test(status),
+          entscheidung: '',
+          status: live ? zeit : status || zeit,
+          drittelHeim: [],
+          drittelGast: [],
+          zaehltZurTabelle: !/exhibition|test|freundschaft/i.test(phase),
+        },
+      ]
+    })
+  } catch (fehler) {
+    console.error('SIHF Spielplanseite nicht erreichbar', fehler)
+    return []
+  }
+}
 
 export type TabellenLink = {
   url: string

@@ -132,9 +132,6 @@ export default async function Startseite() {
             </div>
           </div>
         </div>
-
-        {/* relative: sonst malen die absolut gesetzten Ebenen darüber. */}
-        <div className="trikotband relative" />
       </section>
 
       {/* Roter Balken: letztes Resultat jedes Teams der laufenden Saison, laufende Spiele live. */}

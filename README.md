@@ -122,15 +122,28 @@ Spielen von Montag bis Sonntag: ein Satz pro Spiel, Drittelsresultate,
 Tabellenplatz und das nächste Spiel jedes Teams. Resultate, die am Sonntagabend
 erst auf der Spielseite stehen, werden von dort geholt.
 
+Die Spiele kommen von der Spielplanseite jedes Teams auf sihf.ch – nur dort
+stehen auch Testspiele (sie werden im Text als «Testspiel» bezeichnet).
+
 Von Hand auslösen oder testen:
 
 ```bash
 curl "http://localhost:3000/api/wochenresultate?secret=DEIN_CRON_SECRET&vorschau=1"
 ```
 
+Wer im Redaktionsbereich als **Administrator eingeloggt** ist, kann die Adresse
+auch ohne `secret` direkt im Browser öffnen, z. B. für einen Rückblick nur aufs
+Wochenende (Freitag bis Sonntag):
+
+```
+https://rot-blau-website-five.vercel.app/api/wochenresultate?von=2026-10-30&stichtag=2026-11-01
+```
+
 - `vorschau=1` zeigt nur, was erstellt würde, ohne zu speichern
 - `stichtag=2026-02-01` nimmt die Woche, die am letzten Sonntag bis zu diesem
   Datum endet – gut zum Testen ausserhalb der Saison
+- `von=2026-10-30` beginnt erst an diesem Tag (z. B. Freitag) – dann heisst der
+  Beitrag «Rückblick aufs Wochenende»
 - ohne `vorschau` wird der Beitrag erstellt und veröffentlicht
 
 Läuft der Job zweimal für dieselbe Woche, wird der bestehende Beitrag

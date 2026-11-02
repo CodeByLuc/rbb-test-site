@@ -2,7 +2,7 @@
 
 import Link from 'next/link'
 
-import { mitStand, type SihfSpiel } from '../lib/sihf'
+import { mitStand, SIHF_SPIEL_URL, type SihfSpiel } from '../lib/sihf'
 import { BeendetMarke, LiveMarke } from './Spiele'
 import { useSpielStand } from './useSpielStand'
 
@@ -51,22 +51,24 @@ export function ResultatLive({
   const zusatz = live ? stand?.periode : entscheidungText[spiel.entscheidung]
 
   return (
-    <li className="md:min-w-0" aria-live={live ? 'polite' : undefined}>
-      <Link
-        href={`/teams/${teamSlug}`}
-        className="group flex items-center justify-between gap-6 md:justify-start"
-      >
-        <span className="min-w-0">
-          <span className="flex flex-wrap items-center gap-2 font-display text-xs tracking-[0.2em] text-white uppercase">
-            {teamName} · {spiel.wochentag} {spiel.datum.slice(0, 6)}
-            {!live && <BeendetMarke />}
-          </span>
-          <span className="mt-1.5 block font-display text-xl leading-none tracking-wide uppercase decoration-2 underline-offset-4 group-hover:underline">
-            {wirSindHeim ? 'gegen' : 'bei'} {gegner}
-          </span>
-          {zusatz && <span className="mt-1 block text-xs text-white">{zusatz}</span>}
+    <li
+      className="flex items-center justify-between gap-6 md:min-w-0 md:justify-start"
+      aria-live={live ? 'polite' : undefined}
+    >
+      <Link href={`/teams/${teamSlug}`} className="group min-w-0">
+        <span className="flex flex-wrap items-center gap-2 font-display text-xs tracking-[0.2em] text-white uppercase">
+          {teamName} · {spiel.wochentag} {spiel.datum.slice(0, 6)}
+          {!live && <BeendetMarke />}
         </span>
-        <span className="flex shrink-0 items-center gap-3">
+        <span className="mt-1.5 block font-display text-xl leading-none tracking-wide uppercase decoration-2 underline-offset-4 group-hover:underline">
+          {wirSindHeim ? 'gegen' : 'bei'} {gegner}
+        </span>
+        {zusatz && <span className="mt-1 block text-xs text-white">{zusatz}</span>}
+      </Link>
+
+      {/* Eigener Link unter dem Spielstand – ein Link im Link wäre ungültig. */}
+      <span className="flex shrink-0 flex-col items-start gap-1.5">
+        <span className="flex items-center gap-3">
           <span className="tafelzahl text-5xl">
             {eigene}
             <span className="text-white/70">:</span>
@@ -82,7 +84,18 @@ export function ResultatLive({
             </span>
           )}
         </span>
-      </Link>
+        {spiel.gameId && (
+          <a
+            href={SIHF_SPIEL_URL(spiel.gameId)}
+            target="_blank"
+            rel="noopener noreferrer"
+            title="Spiel bei Swiss Ice Hockey öffnen"
+            className="font-display text-xs tracking-[0.15em] text-white uppercase underline decoration-white/50 underline-offset-4 hover:decoration-white"
+          >
+            Spieldetails ↗
+          </a>
+        )}
+      </span>
     </li>
   )
 }
