@@ -60,7 +60,7 @@ export default async function BeitragSeite({ params }: Props) {
             )}
           </p>
         </div>
-        <div className="kante h-1.5" />
+        <div className="trikotband" />
       </div>
 
       <div className="inhalt max-w-3xl">

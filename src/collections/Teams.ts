@@ -110,8 +110,8 @@ export const Teams: CollectionConfig = {
             {
               name: 'spieler',
               type: 'array',
-              label: 'Spieler:innen',
-              labels: { singular: 'Spieler:in', plural: 'Spieler:innen' },
+              label: 'Spieler',
+              labels: { singular: 'Spieler', plural: 'Spieler' },
               admin: { description: 'Kader mit Foto, Nummer und Position.' },
               fields: [
                 { name: 'name', type: 'text', label: 'Name', required: true },
@@ -121,9 +121,9 @@ export const Teams: CollectionConfig = {
                   type: 'select',
                   label: 'Position',
                   options: [
-                    { label: 'Torhüter:in', value: 'goalie' },
-                    { label: 'Verteidigung', value: 'verteidigung' },
-                    { label: 'Sturm', value: 'sturm' },
+                    { label: 'Torhüter', value: 'goalie' },
+                    { label: 'Verteidiger', value: 'verteidigung' },
+                    { label: 'Stürmer', value: 'sturm' },
                   ],
                 },
                 { name: 'foto', type: 'upload', relationTo: 'media', label: 'Foto' },
@@ -228,9 +228,10 @@ export const Teams: CollectionConfig = {
             {
               name: 'tabellenUrl',
               type: 'text',
-              label: 'Link zur Tabelle',
+              label: 'Link zur Tabelle (Notlösung)',
               admin: {
-                description: 'Vollständige Adresse der Ranglisten-Seite auf sihf.ch.',
+                description:
+                  'Normalerweise leer lassen: Die Website findet die Tabelle der eigenen Gruppe auf sihf.ch selbst (aus Liga-ID und Team-ID). Nur nötig, wenn das nicht klappt – dann die vollständige Adresse der Tabellen-Seite eintragen.',
               },
             },
             {

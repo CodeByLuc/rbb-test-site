@@ -42,7 +42,6 @@ async function main() {
       sihfTeamName: 'EHC Rot-Blau Bern-Bümpliz',
       sihfTeamId: '103916',
       sihfLeagueId: '19',
-      tabellenUrl: 'https://www.sihf.ch/de/leagues-cup/clubs/aktivligen/#/clubs/4-league',
     } as never,
   })
   console.log('«1. Mannschaft» auf die 4. Liga gesetzt (Liga 19, Team 103916)')

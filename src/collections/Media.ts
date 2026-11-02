@@ -41,7 +41,7 @@ export const Media: CollectionConfig = {
       label: 'Bildbeschreibung',
       admin: {
         description:
-          'Kurz beschreiben, was auf dem Bild zu sehen ist – hilft blinden Besucher:innen und Google.',
+          'Kurz beschreiben, was auf dem Bild zu sehen ist – hilft blinden Besuchern und Google.',
       },
     },
   ],

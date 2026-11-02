@@ -42,12 +42,12 @@ export const Users: CollectionConfig = {
       // Niemand kann sich selbst zum Admin machen.
       access: { create: isAdminField, update: isAdminField },
       options: [
-        { label: 'Autor:in (darf Beiträge schreiben)', value: 'autor' },
-        { label: 'Administrator:in (darf alles)', value: 'admin' },
+        { label: 'Autor (darf Beiträge schreiben)', value: 'autor' },
+        { label: 'Administrator (darf alles)', value: 'admin' },
       ],
       admin: {
         position: 'sidebar',
-        description: 'Autor:innen können nur Beiträge und Bilder anlegen.',
+        description: 'Autoren können nur Beiträge und Bilder anlegen.',
       },
     },
   ],

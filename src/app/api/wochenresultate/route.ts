@@ -4,27 +4,29 @@ import { type NextRequest, NextResponse } from 'next/server'
 import { getPayload } from 'payload'
 
 import {
+  alsListe,
   baueAuszug,
   baueInhalt,
   baueTitel,
-  letzteWoche,
-  sammleWochenresultate,
+  sammleWoche,
+  spielwoche,
 } from '../../../lib/wochenresultate'
 
 export const dynamic = 'force-dynamic'
 export const maxDuration = 60
 
 /**
- * Erstellt den wöchentlichen Resultate-Beitrag.
+ * Erstellt den Wochenrückblick: einen kurzen Blog-Beitrag mit den Resultaten
+ * aller Teams von Montag bis Sonntag.
  *
- * Läuft auf Vercel jeden Montag um 08:00 (siehe vercel.json) und kann jederzeit
- * von Hand ausgelöst werden:
+ * Läuft auf Vercel jeden Sonntagabend (siehe vercel.json, 22 Uhr UTC = 23 Uhr
+ * Schweizer Winterzeit) und kann jederzeit von Hand ausgelöst werden:
  *
  *   GET /api/wochenresultate?secret=<CRON_SECRET>
  *
  * Zusatzparameter zum Testen:
  *   &vorschau=1   – zeigt, was erstellt würde, ohne etwas zu speichern
- *   &stichtag=2026-02-02  – rechnet die Woche vor diesem Datum
+ *   &stichtag=2026-02-01  – nimmt die Woche, die am letzten Sonntag bis zu diesem Datum endet
  */
 export async function GET(anfrage: NextRequest) {
   const params = anfrage.nextUrl.searchParams
@@ -45,15 +47,17 @@ export async function GET(anfrage: NextRequest) {
   }
 
   const nurVorschau = params.get('vorschau') === '1'
-  const zeitraum = letzteWoche(stichtag)
+  const woche = spielwoche(stichtag)
 
   try {
     const payload = await getPayload({ config: await configPromise })
-    const resultate = await sammleWochenresultate(payload, zeitraum)
+    const wochen = await sammleWoche(payload, woche)
+    const resultate = alsListe(wochen)
 
-    const titel = baueTitel(zeitraum)
+    const titel = baueTitel(woche)
+    const inhalt = baueInhalt(wochen, woche)
     const zusammenfassung = {
-      zeitraum: { von: zeitraum.von.toISOString(), bis: zeitraum.bis.toISOString() },
+      zeitraum: { von: woche.von.toISOString(), bis: woche.bis.toISOString() },
       titel,
       spiele: resultate.map(({ team, spiel }) => ({
         team: team.name,
@@ -63,11 +67,11 @@ export async function GET(anfrage: NextRequest) {
     }
 
     if (nurVorschau) {
-      return NextResponse.json({ vorschau: true, ...zusammenfassung })
+      return NextResponse.json({ vorschau: true, ...zusammenfassung, auszug: baueAuszug(wochen), inhalt })
     }
 
     // In der Sommerpause wird wochenlang nicht gespielt. Ohne diese Bremse
-    // entstünde jeden Montag ein Beitrag «keine Meisterschaftsspiele
+    // entstünde jeden Sonntag ein Beitrag «keine Meisterschaftsspiele
     // ausgetragen», der die echten Vereinsnachrichten nach unten schiebt.
     if (resultate.length === 0) {
       return NextResponse.json({
@@ -87,9 +91,10 @@ export async function GET(anfrage: NextRequest) {
 
     const daten = {
       titel,
-      auszug: baueAuszug(resultate),
-      inhalt: baueInhalt(resultate, zeitraum) as never,
-      datum: zeitraum.bis.toISOString(),
+      auszug: baueAuszug(wochen),
+      inhalt: inhalt as never,
+      // Jetzt, bei einem Testlauf für eine alte Woche deren Sonntagabend.
+      datum: new Date(Math.min(Date.now(), woche.bis.getTime() - 60_000)).toISOString(),
       typ: 'resultate' as const,
       _status: 'published' as const,
     }

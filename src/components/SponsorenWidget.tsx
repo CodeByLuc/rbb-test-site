@@ -14,7 +14,7 @@ function SponsorKachel({ sponsor, gross }: { sponsor: Sponsoren; gross?: boolean
 
   const inhalt = (
     <div
-      className={`flex h-full items-center justify-center border-b-3 border-transparent bg-white p-4 transition-all group-hover/kachel:border-rot group-hover/kachel:shadow-lg ${
+      className={`flex h-full items-center justify-center border-b-3 border-transparent bg-white p-4 transition-[border-color,box-shadow] group-hover/kachel:border-rot group-hover/kachel:shadow-lg ${
         gross ? 'min-h-24' : 'min-h-18'
       }`}
     >
@@ -87,7 +87,7 @@ export function SponsorenWidget({ sponsoren }: { sponsoren: Sponsoren[] }) {
       <div className="p-5">
         <Link
           href="/sponsoren"
-          className="knopf block bg-rot px-4 py-3 text-center font-display text-base tracking-widest uppercase transition-colors hover:bg-rot-dunkel"
+          className="knopf block bg-rot-dunkel px-4 py-3 text-center font-display text-base tracking-widest uppercase transition-colors hover:bg-rot-tief"
         >
           Sponsor werden
         </Link>

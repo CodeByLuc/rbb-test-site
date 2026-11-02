@@ -21,7 +21,8 @@ export function SpielerFoto({
   const gross = bildDaten(bild, 'hero')
 
   if (!gross) {
-    return <Bild bild={bild} groesse="portrait" className={className} />
+    // Ohne Foto entfällt die Bildfläche: ein schmales Band, darunter der Name.
+    return <div className="trikotband-schmal" aria-hidden="true" />
   }
 
   return (
@@ -29,7 +30,7 @@ export function SpielerFoto({
       <button
         type="button"
         onClick={() => dialogRef.current?.showModal()}
-        className="group block w-full cursor-zoom-in"
+        className="fokus-innen group block w-full cursor-zoom-in"
         aria-label={`Foto von ${name} gross ansehen`}
       >
         <Bild
@@ -53,7 +54,7 @@ export function SpielerFoto({
             type="button"
             onClick={() => dialogRef.current?.close()}
             aria-label="Schliessen"
-            className="absolute top-2 right-2 flex h-9 w-9 items-center justify-center rounded-full bg-nacht/70 text-white hover:bg-rot"
+            className="absolute top-2 right-2 flex h-9 w-9 items-center justify-center rounded-full bg-nacht/70 text-white hover:bg-rot-dunkel"
           >
             <svg viewBox="0 0 24 24" className="h-5 w-5" fill="none" stroke="currentColor" strokeWidth="2">
               <path d="M6 6l12 12M18 6L6 18" strokeLinecap="round" />

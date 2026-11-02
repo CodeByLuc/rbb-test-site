@@ -5,7 +5,7 @@ import { getPayload } from 'payload'
 
 /**
  * Prüft die Zugriffsrechte direkt gegen Payloads Berechtigungslogik.
- * Damit ist belegt, dass Autor:innen nichts kaputt machen können.
+ * Damit ist belegt, dass Autoren nichts kaputt machen können.
  *
  *   npx tsx src/seed/rechte-pruefen.ts
  */
@@ -55,7 +55,7 @@ async function main() {
 
   const alsAutor = { user: autor, overrideAccess: false } as const
 
-  console.log('\n=== Was eine Autor:in darf ===')
+  console.log('\n=== Was ein Autor darf ===')
 
   let eigenerBeitragId: number | null = null
   await pruefe('Beitrag erstellen', 'erlaubt', async () => {
@@ -111,9 +111,9 @@ async function main() {
     payload.find({ collection: 'teams', limit: 1, ...alsAutor }),
   )
 
-  console.log('\n=== Was eine Autor:in NICHT darf ===')
+  console.log('\n=== Was ein Autor NICHT darf ===')
 
-  // Beitrag der Administration – darf die Autor:in nicht anfassen.
+  // Beitrag der Administration – darf der Autor nicht anfassen.
   const fremderBeitrag = await payload.create({
     collection: 'posts',
     data: {
@@ -222,7 +222,7 @@ async function main() {
   })
   const nachher = await payload.findByID({ collection: 'users', id: autor.id })
   if (nachher.role === 'autor') {
-    console.log('  OK       Autor:in bleibt Autor:in (Rollenfeld ist gesperrt)')
+    console.log('  OK       Autor bleibt Autor (Rollenfeld ist gesperrt)')
     bestanden++
   } else {
     console.log(`  PROBLEM  Rolle wurde auf "${nachher.role}" geändert!`)

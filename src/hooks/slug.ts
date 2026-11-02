@@ -12,7 +12,7 @@ export const slugify = (input: string): string =>
 
 /**
  * Erzeugt automatisch einen eindeutigen Slug aus dem angegebenen Feld,
- * damit Autor:innen sich nie um URLs kümmern müssen.
+ * damit Autoren sich nie um URLs kümmern müssen.
  */
 export const generateSlug =
   (fromField: string): CollectionBeforeValidateHook =>

@@ -201,7 +201,7 @@ export interface Post {
 export interface Media {
   id: number;
   /**
-   * Kurz beschreiben, was auf dem Bild zu sehen ist – hilft blinden Besucher:innen und Google.
+   * Kurz beschreiben, was auf dem Bild zu sehen ist – hilft blinden Besuchern und Google.
    */
   alt?: string | null;
   updatedAt: string;
@@ -339,7 +339,7 @@ export interface Team {
    */
   sihfResultateKey?: string | null;
   /**
-   * Vollständige Adresse der Ranglisten-Seite auf sihf.ch.
+   * Normalerweise leer lassen: Die Website findet die Tabelle der eigenen Gruppe auf sihf.ch selbst (aus Liga-ID und Team-ID). Nur nötig, wenn das nicht klappt – dann die vollständige Adresse der Tabellen-Seite eintragen.
    */
   tabellenUrl?: string | null;
   /**
@@ -380,7 +380,7 @@ export interface User {
   id: number;
   name: string;
   /**
-   * Autor:innen können nur Beiträge und Bilder anlegen.
+   * Autoren können nur Beiträge und Bilder anlegen.
    */
   role: 'autor' | 'admin';
   updatedAt: string;

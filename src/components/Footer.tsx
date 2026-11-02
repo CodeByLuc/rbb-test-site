@@ -83,14 +83,14 @@ export function Footer({ einstellungen }: { einstellungen: Einstellungen }) {
           </ul>
           <Link
             href="/admin"
-            className="knopf mt-6 inline-block border-2 border-white/25 px-4 py-2 font-display text-sm tracking-widest uppercase hover:border-rot hover:bg-rot hover:text-white"
+            className="knopf mt-6 inline-block border-2 border-white/25 px-4 py-2 font-display text-sm tracking-widest uppercase hover:border-rot-dunkel hover:bg-rot-dunkel hover:text-white"
           >
             Redaktion
           </Link>
         </div>
       </div>
 
-      <div className="border-t border-white/10 py-5 text-center text-xs text-white/45">
+      <div className="border-t border-white/10 py-5 text-center text-xs text-white/55">
         © {jahr} {einstellungen.vereinsname} · Spielpläne und Resultate: Swiss Ice Hockey Federation ·{' '}
         <Link className="underline hover:text-rot" href="/impressum">
           Impressum &amp; Datenschutz

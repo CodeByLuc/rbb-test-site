@@ -5,12 +5,18 @@ import { notFound } from 'next/navigation'
 import { Bild, bildDaten } from '../../../../components/Bild'
 import { Fliesstext } from '../../../../components/Fliesstext'
 import { PostKarte } from '../../../../components/PostKarte'
-import { LetztesResultat, NaechstesSpiel } from '../../../../components/Spiele'
 import { SpielerFoto } from '../../../../components/SpielerFoto'
 import { Tabelle } from '../../../../components/Tabelle'
-import { TeamKompakt } from '../../../../components/TeamKompakt'
+import { TeamSpieleLive } from '../../../../components/TeamSpieleLive'
 import { holePosts, holeTeam, holeTeams, holeTeamSpielplanMitFallback } from '../../../../lib/daten'
-import { holeTeamSpielplan, mitKuerzeln, saisonAlias } from '../../../../lib/sihf'
+import {
+  holeTabellenLink,
+  holeTeamSpielplan,
+  liveKandidat,
+  mitKuerzeln,
+  saisonAlias,
+  type TabellenLink,
+} from '../../../../lib/sihf'
 
 export const revalidate = 300
 
@@ -34,9 +40,9 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
 }
 
 const positionsNamen: Record<string, string> = {
-  goalie: 'Torhüter:in',
-  verteidigung: 'Verteidigung',
-  sturm: 'Sturm',
+  goalie: 'Torhüter',
+  verteidigung: 'Verteidiger',
+  sturm: 'Stürmer',
 }
 
 export default async function TeamSeite({ params }: Props) {
@@ -44,10 +50,16 @@ export default async function TeamSeite({ params }: Props) {
   const team = await holeTeam(slug)
   if (!team) notFound()
 
-  const [plan, posts] = await Promise.all([
+  const [plan, posts, automatischerLink] = await Promise.all([
     holeTeamSpielplanMitFallback(team),
     holePosts({ limit: 3, teamId: team.id }),
+    holeTabellenLink(team.sihfLeagueId, team.sihfTeamId),
   ])
+
+  // Der Link wird aus Liga- und Team-ID ermittelt; die von Hand erfasste
+  // Adresse greift nur noch, wenn das nicht klappt.
+  const tabellenLink: TabellenLink | null =
+    automatischerLink ?? (team.tabellenUrl ? { url: team.tabellenUrl, art: 'tabelle' } : null)
 
   // In der Sommerpause hat die neue Saison noch keine Spiele – dann zeigen wir die letzte.
   const vorsaison =
@@ -65,6 +77,8 @@ export default async function TeamSeite({ params }: Props) {
   const eigenerName = team.sihfTeamName || 'Rot-Blau'
   // Die Kachel «Letztes Spiel» ist schmal: mit den offiziellen Kürzeln passt sie.
   const letztesSpiel = anzeige?.letztes ? await mitKuerzeln(anzeige.letztes) : null
+  // Läuft gerade ein Spiel (oder beginnt es bald), holt die Seite im Browser den Live-Stand.
+  const kandidat = istVorsaison ? null : liveKandidat(plan.spiele)
 
   const spieler = team.spieler ?? []
   const trainer = team.trainer ?? []
@@ -97,7 +111,7 @@ export default async function TeamSeite({ params }: Props) {
               {anzeige.bilanz.tore}:{anzeige.bilanz.gegentore}
             </span>
           )}
-          <Link href="/teams" className="text-rot-dunkel underline hover:text-rot">
+          <Link href="/teams" className="text-rot-dunkel underline hover:text-rot-tief">
             Alle Teams
           </Link>
         </div>
@@ -108,41 +122,36 @@ export default async function TeamSeite({ params }: Props) {
         Partien. Darunter links der Kader, rechts die Tabelle.
       */}
       <div className="inhalt grid gap-6 pt-6 lg:grid-cols-[2fr_1fr] lg:gap-8">
+        {/*
+          self-start: Sonst zieht das Grid die Kachel auf die Höhe der
+          Spielkarten daneben, und unter dem Foto bleibt ein leerer
+          dunkelblauer Balken stehen. So endet die Kachel genau mit dem Bild.
+        */}
         {teamfoto && (
-          <div className="kachel relative overflow-hidden bg-nacht shadow-xl">
+          <div className="kachel relative self-start overflow-hidden shadow-xl">
             <Bild
               bild={team.teamfoto}
               groesse="hero"
               priority
-              className="h-auto w-full"
+              className="block h-auto w-full"
               sizes="(max-width: 1024px) 100vw, 60vw"
             />
           </div>
         )}
 
-        {/* Letztes und nächstes Spiel – auf dem Telefon als Kurzübersicht. */}
-        {anzeige && (anzeige.naechste[0] || anzeige.letztes || anzeige.tabelle.length > 0) && (
-          <>
-            <TeamKompakt
+        {/* Letztes und nächstes Spiel (mit Live-Stand) – auf dem Telefon als Kurzübersicht. */}
+        {anzeige &&
+          (anzeige.naechste[0] || anzeige.letztes || kandidat || anzeige.tabelle.length > 0) && (
+            <TeamSpieleLive
               tabelle={anzeige.tabelle}
-              letztes={anzeige.letztes}
-              naechstes={anzeige.naechste[0]}
+              letztes={letztesSpiel ?? anzeige.letztes}
+              naechste={anzeige.naechste}
+              kandidat={kandidat}
               eigenerName={eigenerName}
               liga={team.liga}
-              tabellenUrl={team.tabellenUrl}
-              className="lg:hidden"
+              tabellenLink={tabellenLink}
             />
-
-            <div className="hidden gap-5 lg:grid lg:content-start">
-              {anzeige.naechste[0] && (
-                <NaechstesSpiel spiel={anzeige.naechste[0]} eigenerName={eigenerName} />
-              )}
-              {anzeige.letztes && (
-                <LetztesResultat spiel={letztesSpiel ?? anzeige.letztes} eigenerName={eigenerName} />
-              )}
-            </div>
-          </>
-        )}
+          )}
       </div>
 
       <div className="inhalt grid gap-10 py-10 lg:grid-cols-[3fr_2fr]">
@@ -206,7 +215,7 @@ export default async function TeamSeite({ params }: Props) {
                     <div className="p-3">
                       <p className="flex items-baseline gap-2">
                         {person.nummer != null && (
-                          <span className="font-display text-xl text-rot">{person.nummer}</span>
+                          <span className="font-display text-xl text-rot-dunkel">{person.nummer}</span>
                         )}
                         <span className="font-semibold text-nacht">{person.name}</span>
                       </p>
@@ -250,7 +259,7 @@ export default async function TeamSeite({ params }: Props) {
                 zeilen={anzeige.tabelle}
                 eigenerName={eigenerName}
                 titel={`Tabelle${team.liga ? ` – ${team.liga}` : ''}`}
-                tabellenUrl={team.tabellenUrl}
+                tabellenLink={tabellenLink}
               />
             </div>
           )}
@@ -267,7 +276,7 @@ export default async function TeamSeite({ params }: Props) {
                   >
                     <p className="font-display text-lg tracking-wide uppercase">{training.tag}</p>
                     <p className="text-white/70">{training.zeit}</p>
-                    {training.ort && <p className="text-xs text-white/45">{training.ort}</p>}
+                    {training.ort && <p className="text-xs text-white/60">{training.ort}</p>}
                   </li>
                 ))}
               </ul>

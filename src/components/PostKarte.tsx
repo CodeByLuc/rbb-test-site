@@ -21,7 +21,7 @@ export function PostKarte({ post, gross = false }: { post: Post; gross?: boolean
   const etiketten = (
     <>
       {post.typ === 'resultate' && (
-        <span className="etikett bg-rot px-2.5 py-1 font-display text-xs tracking-[0.18em] text-white uppercase">
+        <span className="etikett bg-rot-dunkel px-2.5 py-1 font-display text-xs tracking-[0.18em] text-white uppercase">
           Resultate
         </span>
       )}
@@ -40,7 +40,7 @@ export function PostKarte({ post, gross = false }: { post: Post; gross?: boolean
       }`}
     >
       {hatBild ? (
-        <Link href={`/news/${post.slug}`} className="relative block overflow-hidden">
+        <Link href={`/news/${post.slug}`} className="fokus-innen relative block overflow-hidden">
           <Bild
             bild={post.titelbild}
             groesse={gross ? 'hero' : 'card'}
@@ -83,7 +83,7 @@ export function PostKarte({ post, gross = false }: { post: Post; gross?: boolean
 
         <Link
           href={`/news/${post.slug}`}
-          className="mt-auto self-start border-b-2 border-rot pb-0.5 font-display text-sm tracking-widest text-nacht uppercase transition-colors hover:text-rot"
+          className="mt-auto self-start border-b-2 border-rot pb-0.5 font-display text-sm tracking-widest text-nacht uppercase transition-colors hover:text-rot-dunkel"
         >
           Weiterlesen
         </Link>

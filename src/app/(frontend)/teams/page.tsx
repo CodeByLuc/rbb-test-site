@@ -28,7 +28,7 @@ function TeamKachel({ team }: { team: Team }) {
       <Bild
         bild={team.teamfoto}
         groesse="card"
-        className="absolute inset-0 h-full w-full object-cover object-[50%_20%] opacity-55 transition-all duration-500 group-hover:scale-105 group-hover:opacity-70"
+        className="absolute inset-0 h-full w-full object-cover object-[50%_20%] opacity-55 transition-[opacity,scale] duration-500 group-hover:scale-105 group-hover:opacity-70"
         sizes="(max-width: 640px) 100vw, 33vw"
         ersatz={<div className="eisglanz absolute inset-0 bg-blau-dunkel" />}
       />
@@ -36,7 +36,7 @@ function TeamKachel({ team }: { team: Team }) {
 
       <div className="relative p-5">
         {team.liga && (
-          <span className="etikett mb-2 inline-block bg-rot px-2 py-0.5 font-display text-xs tracking-[0.18em] uppercase">
+          <span className="etikett mb-2 inline-block bg-rot-dunkel px-2 py-0.5 font-display text-xs tracking-[0.18em] uppercase">
             {team.liga}
           </span>
         )}

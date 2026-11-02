@@ -19,15 +19,15 @@ http://localhost:3000/admin.
 | Konto               | Passwort      | Rolle                          |
 | ------------------- | ------------- | ------------------------------ |
 | admin@rot-blau.ch   | RotBlau2026!  | Administration – darf alles    |
-| autor@rot-blau.ch   | RotBlau2026!  | Autor:in – darf Beiträge       |
+| autor@rot-blau.ch   | RotBlau2026!  | Autor – darf Beiträge          |
 
 ## Wer darf was
 
 Es gibt bewusst nur zwei Rollen:
 
-- **Autor:in** – schreibt Beiträge und lädt Bilder hoch. Kann eigene Beiträge
+- **Autor** – schreibt Beiträge und lädt Bilder hoch. Kann eigene Beiträge
   bearbeiten und löschen, aber nichts anderes. Teams, Sponsoren, Seiteninhalte und
-  Konten sind für sie gesperrt. So kann beim Schreiben nichts durcheinandergeraten.
+  Konten sind für Autoren gesperrt. So kann beim Schreiben nichts durcheinandergeraten.
 - **Administration** – darf alles, inklusive Teams, Sponsoren, Seiteninhalte und
   neue Konten.
 
@@ -59,10 +59,13 @@ und ohne Vertrag.
 
 **Wo das erscheint**
 
-- Startseite: Kachel mit dem letzten Resultat jedes Teams
-- Teamseite: letztes Resultat gross, dazu der komplette Spielplan mit
-  Drittelsergebnissen und ein Link zur Tabelle auf sihf.ch
-- Jeden Montag: automatisch ein Beitrag «Resultate der Woche» mit allen Spielen
+- Startseite: roter Balken mit dem letzten Resultat jedes Teams – läuft gerade
+  ein Spiel, steht dort der Live-Stand (Marke «Live» mit Drittel), danach
+  «Beendet»
+- Teamseite: letztes Resultat gross (ebenfalls live während des Spiels), dazu
+  Tabelle und ein Link zur offiziellen Tabelle der eigenen Gruppe auf sihf.ch
+- Jeden Sonntagabend: automatisch ein kurzer Blog-Beitrag «Wochenrückblick» mit
+  allen Resultaten der Woche
 
 **Welche Teams angebunden sind** (geprüft am 25.07.2026, Saison 2025/26):
 
@@ -77,7 +80,8 @@ U16, U12, U9, Hockeyschule und Senioren spielen keine Meisterschaft, die bei der
 SIHF veröffentlicht wird – für sie zeigt die Website nur Trainingszeiten.
 
 **Anbindung ändern:** Im Redaktionsbereich unter **Teams → Team → Spielplan (SIHF)**.
-Dort stehen Liga-ID, Team-ID und der Link zur Tabelle. Ob die 1. oder die
+Dort stehen Liga-ID und Team-ID. Den Link zur Tabelle findet die Website daraus
+selbst (siehe unten), das Feld «Link zur Tabelle» ist nur noch eine Notlösung. Ob die 1. oder die
 2. Mannschaft in der 3. Liga spielt, lässt sich dort korrigieren.
 
 **Liga-IDs zum Nachschlagen:** 1 = NL, 2 = SL, 3 = 1. Liga, 10 = 2. Liga,
@@ -95,9 +99,28 @@ https://data.sihf.ch/statistic/api/cms/cache300?alias=results&searchQuery=1,2,4,
 Wichtig: `date` darf in `filterBy` **nicht** vorkommen – sonst liefert die
 Schnittstelle nur die Spiele eines einzelnen Tages statt der ganzen Saison.
 
-## Montags-Beitrag
+## Live-Resultate
 
-Auf Vercel läuft der Job automatisch jeden Montag um 08:00 (`vercel.json`).
+Die Spielseite jedes Spiels auf sihf.ch zeigt, ob es geplant, live oder beendet
+ist, samt Spielstand und Drittel (`holeSpielStand` in [src/lib/sihf.ts](src/lib/sihf.ts)).
+Ab 15 Minuten vor dem Anspiel fragt der Browser alle 30 Sekunden
+`/api/live?spiele=<Spiel-ID>` ab, bis das Spiel beendet ist. sihf.ch speichert
+die Seite eine Minute zwischen – schneller als etwa eine Minute wird es also nicht.
+
+## Link zur Tabelle
+
+`holeTabellenLink` ruft die Teamseite auf sihf.ch auf (`game-center/team/<Liga>-1-<Team>`).
+sihf.ch leitet dort auf die richtige Region und Gruppe weiter; daraus entsteht
+z. B. `game-center/liga/tabelle/19-3?group=79220`. Führt eine Liga keine Tabelle
+(z. B. U14), zeigt der Link auf die Teamseite.
+
+## Sonntags-Blog
+
+Auf Vercel läuft der Job automatisch jeden Sonntag um 22:00 UTC, also 23:00
+Schweizer Winterzeit (`vercel.json`). Er schreibt einen kurzen Beitrag mit allen
+Spielen von Montag bis Sonntag: ein Satz pro Spiel, Drittelsresultate,
+Tabellenplatz und das nächste Spiel jedes Teams. Resultate, die am Sonntagabend
+erst auf der Spielseite stehen, werden von dort geholt.
 
 Von Hand auslösen oder testen:
 
@@ -106,8 +129,8 @@ curl "http://localhost:3000/api/wochenresultate?secret=DEIN_CRON_SECRET&vorschau
 ```
 
 - `vorschau=1` zeigt nur, was erstellt würde, ohne zu speichern
-- `stichtag=2026-02-02` rechnet die Woche vor diesem Datum – gut zum Testen
-  ausserhalb der Saison
+- `stichtag=2026-02-01` nimmt die Woche, die am letzten Sonntag bis zu diesem
+  Datum endet – gut zum Testen ausserhalb der Saison
 - ohne `vorschau` wird der Beitrag erstellt und veröffentlicht
 
 Läuft der Job zweimal für dieselbe Woche, wird der bestehende Beitrag
@@ -176,10 +199,10 @@ src/
   globals/           Seiteninhalte (Eishockey, Verein, Einstellungen)
   components/        Bausteine der Website
   lib/sihf.ts        Schnittstelle zu Swiss Ice Hockey
-  lib/wochenresultate.ts  Logik für den Montags-Beitrag
+  lib/wochenresultate.ts  Logik für den Sonntags-Blog
   seed/              Startinhalte und Rechteprüfung
   app/(frontend)/    Die öffentliche Website
-  app/api/           Der Montags-Job
+  app/api/           Sonntags-Blog und Live-Stand
 ```
 
 ## Veröffentlichen

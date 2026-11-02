@@ -112,6 +112,9 @@ function spieleAusAntwort(antwort: ApiAntwort): SihfSpiel[] {
 
     const toreHeim = zahlOderNull(score.homeTeam)
     const toreGast = zahlOderNull(score.awayTeam)
+    // Während des Spiels steht hier schon der Zwischenstand (z. B. 0:0 im
+    // 1. Drittel). Gespielt ist das Spiel erst, wenn es zu 100 % durch ist.
+    const fertig = status.percent === undefined || Number(status.percent) >= 100
 
     return {
       gameId: details.gameId ? String(details.gameId) : null,
@@ -123,7 +126,7 @@ function spieleAusAntwort(antwort: ApiAntwort): SihfSpiel[] {
       gast: alsTeam(hole(zeile, iAway)),
       toreHeim,
       toreGast,
-      gespielt: toreHeim !== null && toreGast !== null,
+      gespielt: toreHeim !== null && toreGast !== null && fertig,
       abgesagt: status.canceled === true,
       entscheidung: String(hole(zeile, iDecision) ?? '').trim(),
       status: typeof status.name === 'string' ? status.name : '',
@@ -136,7 +139,7 @@ function spieleAusAntwort(antwort: ApiAntwort): SihfSpiel[] {
 type LigaOptionen = {
   ligaId: string | number
   saison?: string
-  /** Sekunden bis die Antwort neu geholt wird. 0 = immer frisch (für den Montags-Job). */
+  /** Sekunden bis die Antwort neu geholt wird. 0 = immer frisch (für den Sonntags-Job). */
   revalidate?: number
 }
 
@@ -618,6 +621,80 @@ export async function holeClubSpiele(keyId: string, revalidate = 300): Promise<S
   }
 }
 
+export type SpielZustand = 'geplant' | 'live' | 'beendet' | 'abgesagt'
+
+/** Stand eines einzelnen Spiels, so wie ihn die Spielseite auf sihf.ch zeigt. */
+export type SpielStand = {
+  gameId: string
+  zustand: SpielZustand
+  /** Spielabschnitt, z. B. "2. Drittel" oder "Ende". */
+  periode: string
+  toreHeim: number | null
+  toreGast: number | null
+  /** Drittelresultate aus Sicht Heim:Gast, z. B. ["1:3", "0:1"]. */
+  drittel: string[]
+  kuerzel: { heim: string; gast: string } | null
+}
+
+const ZUSTAENDE: Record<string, SpielZustand> = {
+  scheduled: 'geplant',
+  live: 'live',
+  finished: 'beendet',
+  canceled: 'abgesagt',
+}
+
+/**
+ * Liest den Spielstand aus der Spielseite. Der Kopf der Seite trägt den
+ * Zustand als Klasse (`is-scheduled`, `is-live`, `is-finished`,
+ * `is-canceled`), daneben stehen Abschnitt, Tore und Drittelresultate.
+ */
+function spielStandAusHtml(gameId: string, html: string): SpielStand | null {
+  const zustand = ZUSTAENDE[html.match(/class="c-game-detail-header is-([a-z]+)"/)?.[1] ?? '']
+  if (!zustand) return null
+
+  const text = (roh: string) => roh.replace(/&amp;/g, '&').trim()
+  const kuerzel = [
+    ...html.matchAll(/c-game-detail-header__team-acronym">\s*([^<]{1,12}?)\s*</g),
+  ].map((treffer) => text(treffer[1]))
+
+  // Nur der grosse Spielstand zählt; vor dem Spiel steht dort nichts.
+  const block = html.match(/c-game-detail-header__score"[\s\S]*?<\/div>/)?.[0] ?? ''
+  const tore = [...block.matchAll(/__score-value">\s*(\d+)\s*</g)].map((treffer) => Number(treffer[1]))
+  const hatTore = zustand !== 'geplant' && tore.length >= 2
+
+  return {
+    gameId,
+    zustand,
+    // "01.11.2026 - Ende" bzw. "02.11.2026 - 2. Drittel"
+    periode: text(html.match(/c-game-detail-header__date">[^<]*? - ([^<]+)</)?.[1] ?? ''),
+    toreHeim: hatTore ? tore[0] : null,
+    toreGast: hatTore ? tore[1] : null,
+    drittel: [...html.matchAll(/c-game-detail-header__period">\s*<span>\s*(\d+:\d+)\s*</g)].map(
+      (treffer) => treffer[1],
+    ),
+    kuerzel: kuerzel.length >= 2 ? { heim: kuerzel[0], gast: kuerzel[1] } : null,
+  }
+}
+
+/**
+ * Aktueller Stand eines Spiels von sihf.ch – während des Spiels mit dem
+ * laufenden Resultat. Die Seite selbst ist dort eine Minute zwischengespeichert,
+ * schneller kann es also nicht werden. Leer, wenn die Seite fehlt oder sich ihr
+ * Aufbau ändert.
+ */
+export async function holeSpielStand(gameId: string, revalidate = 30): Promise<SpielStand | null> {
+  if (!/^\d+$/.test(gameId)) return null
+  try {
+    const antwort = await fetch(SIHF_SPIEL_URL(gameId), {
+      ...(revalidate > 0 ? { next: { revalidate } } : { cache: 'no-store' as RequestCache }),
+    })
+    if (!antwort.ok) return null
+    return spielStandAusHtml(gameId, await antwort.text())
+  } catch {
+    return null
+  }
+}
+
 /**
  * Offizielle Teamkürzel eines Spiels (z. B. "EHCRB", "HCW"). Weder die
  * Club-Schnittstelle noch die Statistik-API liefern sie zuverlässig, die
@@ -627,15 +704,96 @@ export async function holeClubSpiele(keyId: string, revalidate = 300): Promise<S
 export async function holeSpielKuerzel(
   gameId: string,
 ): Promise<{ heim: string; gast: string } | null> {
-  if (!/^\d+$/.test(gameId)) return null
+  return (await holeSpielStand(gameId, 86400))?.kuerzel ?? null
+}
+
+const STUNDE_MS = 60 * 60 * 1000
+
+/** Ab so viel vor dem Anspiel fragt die Website den Live-Stand ab. */
+export const LIVE_VORLAUF_MS = 15 * 60 * 1000
+/** So lange nach dem Anspiel bleibt das Spiel mit «Beendet» stehen. */
+export const LIVE_NACHLAUF_MS = 12 * STUNDE_MS
+
+/**
+ * Das Spiel, das gerade läuft, eben zu Ende ging oder in den nächsten 24
+ * Stunden beginnt. Für dieses Spiel holt die Seite im Browser den Live-Stand.
+ * Bereits angepfiffene Spiele haben Vorrang vor dem nächsten.
+ */
+export function liveKandidat(spiele: SihfSpiel[], jetzt = Date.now()): SihfSpiel | null {
+  const imFenster = spiele
+    .filter((s) => s.gameId && s.zeitpunkt && !s.abgesagt)
+    .map((spiel) => ({ spiel, start: Date.parse(spiel.zeitpunkt!) }))
+    .filter(({ start }) => start >= jetzt - LIVE_NACHLAUF_MS && start <= jetzt + 24 * STUNDE_MS)
+
+  const begonnen = imFenster
+    .filter(({ start }) => start <= jetzt + LIVE_VORLAUF_MS)
+    .sort((a, b) => b.start - a.start)
+  if (begonnen[0]) return begonnen[0].spiel
+
+  return imFenster.sort((a, b) => a.start - b.start)[0]?.spiel ?? null
+}
+
+/** Übernimmt Resultat und Drittel aus dem Live-Stand, solange das Spiel läuft oder beendet ist. */
+export function mitStand(spiel: SihfSpiel, stand: SpielStand | null): SihfSpiel {
+  if (!stand || stand.toreHeim === null || stand.toreGast === null) return spiel
+  if (stand.zustand !== 'live' && stand.zustand !== 'beendet') return spiel
+
+  const drittel = stand.drittel.slice(0, 3).map((teil) => teil.split(':'))
+  return {
+    ...spiel,
+    toreHeim: stand.toreHeim,
+    toreGast: stand.toreGast,
+    gespielt: stand.zustand === 'beendet',
+    status: stand.periode,
+    drittelHeim: drittel.map((teil) => teil[0]),
+    drittelGast: drittel.map((teil) => teil[1]),
+    heim: stand.kuerzel ? { ...spiel.heim, kuerzel: stand.kuerzel.heim } : spiel.heim,
+    gast: stand.kuerzel ? { ...spiel.gast, kuerzel: stand.kuerzel.gast } : spiel.gast,
+  }
+}
+
+const GAME_CENTER = 'https://www.sihf.ch/de/game-center'
+
+export type TabellenLink = {
+  url: string
+  /** "tabelle" = Rangliste der eigenen Gruppe, "team" = Teamseite (Liga ohne Tabelle). */
+  art: 'tabelle' | 'team'
+}
+
+/**
+ * Link zur offiziellen Tabelle der Gruppe, in der das Team spielt.
+ *
+ * Die Teamseite auf sihf.ch leitet von jeder Region auf die richtige Region
+ * und Gruppe weiter und verlinkt sich danach selbst mit beiden, etwa
+ * `team/19-3-103916?group=79220`. Daraus entsteht die Tabellenadresse
+ * `liga/tabelle/19-3?group=79220`. Manche Ligen (z. B. U14) haben dort keine
+ * Tabelle – dann führt der Link auf die Teamseite. Einen Tag zwischengespeichert.
+ */
+export async function holeTabellenLink(
+  ligaId?: string | number | null,
+  teamId?: string | number | null,
+): Promise<TabellenLink | null> {
+  const liga = String(ligaId ?? '').trim()
+  const team = String(teamId ?? '').trim()
+  if (!/^\d+$/.test(liga) || !/^\d+$/.test(team)) return null
+
   try {
-    const antwort = await fetch(SIHF_SPIEL_URL(gameId), { next: { revalidate: 86400 } })
+    // Die Region in der Adresse ist egal, sihf.ch leitet auf die richtige weiter.
+    const antwort = await fetch(`${GAME_CENTER}/team/${liga}-1-${team}`, {
+      next: { revalidate: 86400 },
+    })
     if (!antwort.ok) return null
     const html = await antwort.text()
-    const kuerzel = [
-      ...html.matchAll(/c-game-detail-header__team-acronym">\s*([^<]{1,12}?)\s*</g),
-    ].map((treffer) => treffer[1].replace(/&amp;/g, '&'))
-    return kuerzel.length >= 2 ? { heim: kuerzel[0], gast: kuerzel[1] } : null
+
+    const treffer = html.match(new RegExp(`game-center/team/(\\d+)-(\\d+)-${team}\\?group=(\\d+)`))
+    if (!treffer) return null
+    const [, ligaEcht, region, gruppe] = treffer
+
+    const tabelle = `${GAME_CENTER}/liga/tabelle/${ligaEcht}-${region}?group=${gruppe}`
+    const pruefung = await fetch(tabelle, { next: { revalidate: 86400 } })
+    if (pruefung.ok) return { url: tabelle, art: 'tabelle' }
+
+    return { url: `${GAME_CENTER}/team/${ligaEcht}-${region}-${team}?group=${gruppe}`, art: 'team' }
   } catch {
     return null
   }

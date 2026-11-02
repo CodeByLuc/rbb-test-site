@@ -2,6 +2,7 @@ import Link from 'next/link'
 
 import { Bild, bildDaten } from '../../components/Bild'
 import { PostKarte } from '../../components/PostKarte'
+import { ResultatLive } from '../../components/ResultatLive'
 import { SponsorenWidget } from '../../components/SponsorenWidget'
 import {
   holeEinstellungen,
@@ -13,6 +14,8 @@ import {
 } from '../../lib/daten'
 import {
   datumAusSihf,
+  LIVE_VORLAUF_MS,
+  liveKandidat,
   type SihfSpiel,
   type TeamSpielplan,
 } from '../../lib/sihf'
@@ -21,12 +24,13 @@ import type { Team } from '../../payload-types'
 // Die Startseite wird häufig neu gebaut für aktuelle Logo/Sponsor-Änderungen
 export const revalidate = 60
 
-type TeamPlan = { team: Team; plan: TeamSpielplan }
+type TeamPlan = { team: Team; plan: TeamSpielplan; kandidat: SihfSpiel | null }
 
 /**
  * Spielpläne aller angebundenen Teams der laufenden Saison. Teams ohne
  * absolviertes Spiel erscheinen nicht – es gibt bewusst keinen Rückgriff auf
- * die Vorsaison.
+ * die Vorsaison. Ausnahme: Das erste Spiel läuft gerade (oder beginnt gleich),
+ * dann zeigt der Balken es live.
  */
 async function alleSpielplaene(teams: Team[]): Promise<TeamPlan[]> {
   const angebunden = teams.filter(
@@ -34,62 +38,22 @@ async function alleSpielplaene(teams: Team[]): Promise<TeamPlan[]> {
   )
 
   const plaene = await Promise.all(
-    angebunden.map(async (team) => ({ team, plan: await holeTeamSpielplanMitFallback(team) })),
+    angebunden.map(async (team) => {
+      const plan = await holeTeamSpielplanMitFallback(team)
+      return { team, plan, kandidat: liveKandidat(plan.spiele) }
+    }),
   )
-  return plaene.filter((eintrag) => eintrag.plan.letztes)
+  return plaene.filter((eintrag) => eintrag.plan.letztes || angepfiffen(eintrag.kandidat))
 }
 
-const ausgangText = { S: 'Sieg', N: 'Niederlage', U: 'Unentschieden' } as const
-const ausgangFarbe = {
-  S: 'bg-white text-rot-dunkel',
-  N: 'bg-nacht text-white',
-  U: 'bg-white/25 text-white',
-} as const
-const entscheidungText: Record<string, string> = {
-  OT: 'nach Verlängerung',
-  SO: 'nach Penaltyschiessen',
-}
+/** Hat das Spiel begonnen (oder beginnt es in den nächsten Minuten)? */
+const angepfiffen = (spiel: SihfSpiel | null) =>
+  !!spiel?.zeitpunkt && Date.parse(spiel.zeitpunkt) <= Date.now() + LIVE_VORLAUF_MS
 
-/** Ein Resultat im roten Balken – Anzeigetafel statt Kachel. */
-function Resultat({ team, spiel }: { team: Team; spiel: SihfSpiel }) {
-  const eigenerName = team.sihfTeamName || 'Rot-Blau'
-  const wirSindHeim = spiel.heim.name.toLowerCase().includes(eigenerName.toLowerCase())
-  const eigene = wirSindHeim ? spiel.toreHeim! : spiel.toreGast!
-  const fremde = wirSindHeim ? spiel.toreGast! : spiel.toreHeim!
-  const gegner = wirSindHeim ? spiel.gast.name : spiel.heim.name
-  const ausgang = eigene > fremde ? 'S' : eigene < fremde ? 'N' : 'U'
-  const zusatz = entscheidungText[spiel.entscheidung]
-
-  return (
-    <li className="md:min-w-0">
-      <Link
-        href={`/teams/${team.slug}`}
-        className="group flex items-center justify-between gap-6 md:justify-start"
-      >
-        <span className="min-w-0">
-          <span className="block font-display text-xs tracking-[0.2em] text-white/80 uppercase">
-            {team.name} · {spiel.wochentag} {spiel.datum.slice(0, 6)}
-          </span>
-          <span className="mt-1.5 block font-display text-xl leading-none tracking-wide uppercase decoration-2 underline-offset-4 group-hover:underline">
-            {wirSindHeim ? 'gegen' : 'bei'} {gegner}
-          </span>
-          {zusatz && <span className="mt-1 block text-xs text-white/80">{zusatz}</span>}
-        </span>
-        <span className="flex shrink-0 items-center gap-3">
-          <span className="tafelzahl text-5xl">
-            {eigene}
-            <span className="text-white/55">:</span>
-            {fremde}
-          </span>
-          <span
-            className={`etikett px-2 py-1 font-display text-xs tracking-[0.15em] uppercase ${ausgangFarbe[ausgang]}`}
-          >
-            {ausgangText[ausgang]}
-          </span>
-        </span>
-      </Link>
-    </li>
-  )
+/** Zeitpunkt, nach dem der Balken sortiert: das laufende Spiel, sonst das letzte. */
+function sortierzeit({ plan, kandidat }: TeamPlan): number {
+  if (angepfiffen(kandidat)) return Date.parse(kandidat!.zeitpunkt!)
+  return plan.letztes ? (datumAusSihf(plan.letztes)?.getTime() ?? 0) : 0
 }
 
 export default async function Startseite() {
@@ -106,18 +70,8 @@ export default async function Startseite() {
 
   const plaene = await alleSpielplaene(teams)
 
-  // Neuestes Resultat zuerst, damit oben wirklich das letzte Spiel steht.
-  const resultate = plaene
-    .filter((eintrag) => eintrag.plan.letztes)
-    .map((eintrag) => ({
-      team: eintrag.team,
-      spiel: eintrag.plan.letztes!,
-    }))
-    .sort((a, b) => {
-      const da = datumAusSihf(a.spiel)?.getTime() ?? 0
-      const db = datumAusSihf(b.spiel)?.getTime() ?? 0
-      return db - da
-    })
+  // Laufendes bzw. neuestes Spiel zuerst, damit oben wirklich das aktuelle steht.
+  const resultate = [...plaene].sort((a, b) => sortierzeit(b) - sortierzeit(a))
 
   const [neuester, ...weitere] = posts
   const heroFoto = teams.find((team) => team.teamfoto)?.teamfoto ?? neuester?.titelbild
@@ -148,7 +102,7 @@ export default async function Startseite() {
         >
           <div>
             <p className="mb-2 flex flex-wrap items-center gap-2 font-display text-sm tracking-[0.28em] uppercase">
-              <span className="bg-rot px-2 py-0.5">Seit 1942</span>
+              <span className="bg-rot-dunkel px-2 py-0.5">Seit 1942</span>
               <span className="text-white/70">Eishockey in Bern-Bümpliz</span>
             </p>
             <h1 className="text-4xl leading-[0.85] sm:text-6xl lg:text-7xl">
@@ -165,7 +119,7 @@ export default async function Startseite() {
             <div className="mt-5 flex flex-wrap gap-3">
               <Link
                 href="/teams/hockeyschule"
-                className="knopf bg-rot px-6 py-2.5 font-display text-lg tracking-wide uppercase transition-colors hover:bg-rot-dunkel"
+                className="knopf bg-rot-dunkel px-6 py-2.5 font-display text-lg tracking-wide uppercase transition-colors hover:bg-rot-tief"
               >
                 Eishockey ausprobieren
               </Link>
@@ -179,14 +133,15 @@ export default async function Startseite() {
           </div>
         </div>
 
-        <div className="trikotband" />
+        {/* relative: sonst malen die absolut gesetzten Ebenen darüber. */}
+        <div className="trikotband relative" />
       </section>
 
-      {/* Roter Balken: letztes Resultat jedes Teams der laufenden Saison. */}
+      {/* Roter Balken: letztes Resultat jedes Teams der laufenden Saison, laufende Spiele live. */}
       {resultate.length > 0 && (
         <section
           aria-labelledby="resultate-titel"
-          className="relative overflow-hidden bg-rot text-white"
+          className="relative overflow-hidden bg-rot-dunkel text-white"
         >
           {/* Dieselben diagonalen Linien wie im Hero, hier in Weiss. */}
           <div
@@ -198,12 +153,19 @@ export default async function Startseite() {
               id="resultate-titel"
               className="shrink-0 font-display leading-[0.9] uppercase"
             >
-              <span className="block text-sm tracking-[0.3em] text-white/80">Letzte</span>
+              <span className="block text-sm tracking-[0.3em] text-white">Letzte</span>
               <span className="block text-3xl md:text-4xl">Resultate</span>
             </h2>
             <ul className="flex flex-1 flex-col gap-5 border-t border-white/30 pt-4 md:flex-row md:flex-wrap md:gap-x-10 md:gap-y-5 md:border-t-0 md:border-l md:pt-0 md:pl-10">
-              {resultate.map((eintrag) => (
-                <Resultat key={eintrag.team.id} {...eintrag} />
+              {resultate.map(({ team, plan, kandidat }) => (
+                <ResultatLive
+                  key={team.id}
+                  teamName={team.name}
+                  teamSlug={team.slug}
+                  eigenerName={team.sihfTeamName || 'Rot-Blau'}
+                  letztes={plan.letztes}
+                  kandidat={kandidat}
+                />
               ))}
             </ul>
           </div>

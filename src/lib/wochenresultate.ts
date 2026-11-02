@@ -1,31 +1,71 @@
 import type { Payload } from 'payload'
 
-import { datumAusSihf, holeTeamSpielplan, saisonAlias, type SihfSpiel } from './sihf'
+import { holeTeamSpielplanMitFallback } from './daten'
+import { holeSpielStand, mitStand, saisonAlias, type SihfSpiel } from './sihf'
 import type { Team } from '../payload-types'
 
 export type Wochenspiel = { team: Team; spiel: SihfSpiel }
 
-const TAG_MS = 24 * 60 * 60 * 1000
-
-/** Montag 00:00 der Woche, die vor dem Stichtag liegt, bis Montag 00:00 des Stichtags. */
-export function letzteWoche(stichtag = new Date()) {
-  const bis = new Date(stichtag)
-  bis.setHours(0, 0, 0, 0)
-  // Zurück auf den Montag dieser Woche (Sonntag = 0 zählt zur Vorwoche).
-  const wochentag = (bis.getDay() + 6) % 7
-  bis.setTime(bis.getTime() - wochentag * TAG_MS)
-  const von = new Date(bis.getTime() - 7 * TAG_MS)
-  return { von, bis }
+/** Was ein Team in der Woche gespielt hat, wo es steht und wie es weitergeht. */
+export type TeamWoche = {
+  team: Team
+  spiele: SihfSpiel[]
+  naechstes: SihfSpiel | null
+  rang: { rang: number; teams: number; punkte: number } | null
 }
 
-const wirSindHeim = (spiel: SihfSpiel, eigenerName: string) =>
-  spiel.heim.name.toLowerCase().includes(eigenerName.toLowerCase())
+/**
+ * Montag bis Sonntag als Kalendertage (jeweils UTC-Mitternacht). `bis` ist
+ * der Montag danach und gehört nicht mehr dazu.
+ */
+export type Spielwoche = { von: Date; bis: Date }
 
-/** Sammelt alle gespielten Partien aller Teams innerhalb des Zeitraums. */
-export async function sammleWochenresultate(
-  payload: Payload,
-  zeitraum: { von: Date; bis: Date },
-): Promise<Wochenspiel[]> {
+const TAG_MS = 24 * 60 * 60 * 1000
+
+/** Kalendertag in der Schweiz – der Server auf Vercel läuft in UTC. */
+function zuercherTag(zeitpunkt: Date): number {
+  const [j, m, t] = new Intl.DateTimeFormat('en-CA', {
+    timeZone: 'Europe/Zurich',
+    year: 'numeric',
+    month: '2-digit',
+    day: '2-digit',
+  })
+    .format(zeitpunkt)
+    .split('-')
+    .map(Number)
+  return Date.UTC(j, m - 1, t)
+}
+
+/**
+ * Die zuletzt abgeschlossene Spielwoche: Montag bis zum letzten Sonntag
+ * (an einem Sonntag also die laufende Woche). Läuft der Job am Sonntagabend
+ * erst nach Mitternacht, zählt so trotzdem noch die richtige Woche.
+ */
+export function spielwoche(stichtag = new Date()): Spielwoche {
+  const tag = zuercherTag(stichtag)
+  const sonntag = tag - new Date(tag).getUTCDay() * TAG_MS
+  return { von: new Date(sonntag - 6 * TAG_MS), bis: new Date(sonntag + TAG_MS) }
+}
+
+/** Kalendertag eines Spiels, aus "25.10.2025" (Schweizer Datum der SIHF). */
+function spielTag(spiel: SihfSpiel): number | null {
+  const [t, m, j] = spiel.datum.split('.').map(Number)
+  if ([t, m, j].every(Number.isFinite) && j > 2000) return Date.UTC(j, m - 1, t)
+  return spiel.zeitpunkt ? zuercherTag(new Date(spiel.zeitpunkt)) : null
+}
+
+const nachTag = (a: SihfSpiel, b: SihfSpiel) =>
+  (spielTag(a) ?? 0) - (spielTag(b) ?? 0) || (a.zeit ?? '').localeCompare(b.zeit ?? '')
+
+const istEigenes = (name: string, team: Team) =>
+  name.toLowerCase().includes((team.sihfTeamName || 'Rot-Blau').toLowerCase())
+
+/**
+ * Sammelt für jedes angebundene Team die Spiele der Woche, den Tabellenplatz
+ * und das nächste Spiel – aus denselben Quellen wie die Teamseiten
+ * (Club-Schnittstelle, Statistik-API, Spielplan von Hand).
+ */
+export async function sammleWoche(payload: Payload, woche: Spielwoche): Promise<TeamWoche[]> {
   const { docs: teams } = await payload.find({
     collection: 'teams',
     limit: 100,
@@ -37,36 +77,61 @@ export async function sammleWochenresultate(
     (team) => team.sihfLeagueId && (team.sihfTeamId || team.sihfTeamName),
   )
 
-  // Die Saison richtet sich nach dem Zeitraum, nicht nach dem heutigen Datum –
-  // sonst würde ein Lauf im Sommer die noch leere neue Saison abfragen.
-  const saison = saisonAlias(zeitraum.von)
+  // Die Club-Schnittstelle kennt nur die laufende Saison. Für eine Woche aus
+  // einer früheren Saison (Test mit `stichtag`) bleibt die Statistik-API.
+  const saison = saisonAlias(woche.von)
+  const laufend = saison === saisonAlias()
+  const jetzt = Date.now()
 
-  const proTeam = await Promise.all(
-    angebunden.map(async (team) => {
-      const plan = await holeTeamSpielplan({
-        ligaId: team.sihfLeagueId,
-        teamId: team.sihfTeamId,
-        teamName: team.sihfTeamName,
-        saison,
+  return Promise.all(
+    angebunden.map(async (team): Promise<TeamWoche> => {
+      const plan = await holeTeamSpielplanMitFallback(team, {
         // Der Job braucht frische Daten, keine zwischengespeicherten.
         revalidate: 0,
+        ...(laufend ? {} : { saison }),
+      })
+      const spiele = [...plan.spiele].sort(nachTag)
+
+      const inWoche = spiele.filter((spiel) => {
+        const tag = spielTag(spiel)
+        return !spiel.abgesagt && tag !== null && tag >= woche.von.getTime() && tag < woche.bis.getTime()
       })
 
-      return plan.spiele
-        .filter((spiel) => {
-          if (!spiel.gespielt || spiel.abgesagt) return false
-          const datum = datumAusSihf(spiel)
-          return datum !== null && datum >= zeitraum.von && datum < zeitraum.bis
-        })
-        .map((spiel) => ({ team, spiel }))
+      // Am Sonntagabend steht das jüngste Resultat oft erst auf der Spielseite,
+      // noch nicht in der Club-Schnittstelle. Dann gilt die Spielseite.
+      const gespielt = (
+        await Promise.all(
+          inWoche.map(async (spiel) => {
+            if (spiel.gespielt || !spiel.gameId || !spiel.zeitpunkt) return spiel
+            if (Date.parse(spiel.zeitpunkt) > jetzt) return spiel
+            const stand = await holeSpielStand(spiel.gameId, 0)
+            return stand?.zustand === 'beendet' ? mitStand(spiel, stand) : spiel
+          }),
+        )
+      ).filter((spiel) => spiel.gespielt)
+
+      const naechstes =
+        spiele.find(
+          (spiel) => !spiel.gespielt && !spiel.abgesagt && (spielTag(spiel) ?? 0) >= woche.bis.getTime(),
+        ) ?? null
+
+      const zeile = plan.tabelle.find((z) => istEigenes(z.name, team))
+
+      return {
+        team,
+        spiele: gespielt,
+        naechstes,
+        rang: zeile ? { rang: zeile.rang, teams: plan.tabelle.length, punkte: zeile.punkte } : null,
+      }
     }),
   )
+}
 
-  return proTeam.flat().sort((a, b) => {
-    const da = datumAusSihf(a.spiel)?.getTime() ?? 0
-    const db = datumAusSihf(b.spiel)?.getTime() ?? 0
-    return da - db
-  })
+/** Alle Spiele der Woche in zeitlicher Reihenfolge. */
+export function alsListe(wochen: TeamWoche[]): Wochenspiel[] {
+  return wochen
+    .flatMap(({ team, spiele }) => spiele.map((spiel) => ({ team, spiel })))
+    .sort((a, b) => nachTag(a.spiel, b.spiel))
 }
 
 const absatz = (kinder: unknown[]) => ({
@@ -89,6 +154,8 @@ const textKnoten = (text: string, fett = false) => ({
   text,
 })
 
+const zeilenumbruch = { type: 'linebreak', version: 1 }
+
 const titelKnoten = (text: string) => ({
   type: 'heading',
   tag: 'h3',
@@ -99,75 +166,167 @@ const titelKnoten = (text: string) => ({
   children: [textKnoten(text)],
 })
 
+const wochentage = ['Sonntag', 'Montag', 'Dienstag', 'Mittwoch', 'Donnerstag', 'Freitag', 'Samstag']
+
+const anzahl = (n: number, einzahl: string, mehrzahl: string) =>
+  `${n} ${n === 1 ? einzahl : mehrzahl}`
+
+/** "Die Damen gewannen", aber "Die U14 gewann". */
+const MEHRZAHL = /damen|herren|frauen|senioren|junioren|veteranen/i
+
+/** Resultat aus Sicht des eigenen Teams. */
+function ausSicht(team: Team, spiel: SihfSpiel) {
+  const heim = istEigenes(spiel.heim.name, team)
+  return {
+    heim,
+    eigene: heim ? spiel.toreHeim! : spiel.toreGast!,
+    fremde: heim ? spiel.toreGast! : spiel.toreHeim!,
+    gegner: heim ? spiel.gast.name : spiel.heim.name,
+  }
+}
+
+/** Ein Satz pro Spiel, je nach Ausgang etwas anders formuliert. */
+function spielSatz(team: Team, spiel: SihfSpiel): string {
+  const { heim, eigene, fremde, gegner } = ausSicht(team, spiel)
+  const v = (einzahl: string, mehrzahl: string) => (MEHRZAHL.test(team.name) ? mehrzahl : einzahl)
+  const tag = spielTag(spiel)
+  const wer = `Die ${team.name}`
+  const wann = tag !== null ? `am ${wochentage[new Date(tag).getUTCDay()]}` : ''
+  const wo = `${wann} ${heim ? 'zu Hause' : 'auswärts'} gegen ${gegner}`.trim()
+  const resultat = `${eigene}:${fremde}`
+  const differenz = Math.abs(eigene - fremde)
+  const verlaengerung =
+    spiel.entscheidung === 'OT' ? 'nach Verlängerung' : spiel.entscheidung === 'SO' ? 'im Penaltyschiessen' : ''
+
+  if (eigene > fremde) {
+    if (verlaengerung) {
+      return `${wer} ${v('gewann', 'gewannen')} ${wo} ${verlaengerung} mit ${resultat} und ${v('holte', 'holten')} damit zwei Punkte.`
+    }
+    if (differenz >= 4) return `${wer} ${v('feierte', 'feierten')} ${wo} einen deutlichen ${resultat}-Sieg.`
+    if (differenz === 1) return `${wer} ${v('setzte', 'setzten')} sich ${wo} knapp mit ${resultat} durch.`
+    return `${wer} ${v('gewann', 'gewannen')} ${wo} mit ${resultat}.`
+  }
+
+  if (eigene < fremde) {
+    if (verlaengerung) {
+      return `${wer} ${v('verlor', 'verloren')} ${wo} erst ${verlaengerung} mit ${resultat} – immerhin bleibt ein Punkt.`
+    }
+    if (differenz >= 4) return `${wer} ${v('verlor', 'verloren')} ${wo} deutlich mit ${resultat}.`
+    if (differenz === 1) return `${wer} ${v('musste', 'mussten')} sich ${wo} knapp mit ${resultat} geschlagen geben.`
+    return `${wer} ${v('musste', 'mussten')} sich ${wo} mit ${resultat} geschlagen geben.`
+  }
+
+  return `${wer} ${v('trennte', 'trennten')} sich ${wo} ${resultat} unentschieden.`
+}
+
+/** "Drittelsresultate: 1:3, 0:1, 1:3." aus Sicht des eigenen Teams. */
+function drittelText(team: Team, spiel: SihfSpiel): string {
+  if (spiel.drittelHeim.length === 0) return ''
+  const { heim } = ausSicht(team, spiel)
+  const teile = spiel.drittelHeim.map((tore, i) =>
+    heim ? `${tore}:${spiel.drittelGast[i]}` : `${spiel.drittelGast[i]}:${tore}`,
+  )
+  return ` Drittelsresultate: ${teile.join(', ')}.`
+}
+
+function naechstesText(team: Team, spiel: SihfSpiel): string {
+  const { heim, gegner } = ausSicht(team, spiel)
+  const tag = spielTag(spiel)
+  const datum =
+    tag !== null
+      ? `am ${wochentage[new Date(tag).getUTCDay()]}, ${spiel.datum.slice(0, 6)}${spiel.zeit ? `, um ${spiel.zeit} Uhr` : ''}`
+      : ''
+  return `Weiter geht es ${datum} ${heim ? 'zu Hause' : 'auswärts'} gegen ${gegner}.`.replace(/\s+/g, ' ')
+}
+
+function bilanz(resultate: Wochenspiel[]) {
+  let siege = 0
+  let niederlagen = 0
+  for (const { team, spiel } of resultate) {
+    const { eigene, fremde } = ausSicht(team, spiel)
+    if (eigene > fremde) siege += 1
+    else if (eigene < fremde) niederlagen += 1
+  }
+  return { spiele: resultate.length, siege, niederlagen }
+}
+
+/** Der erste Absatz – die Woche in einem Satz. */
+function einleitung(resultate: Wochenspiel[], woche: Spielwoche): string {
+  const formatiert = new Intl.DateTimeFormat('de-CH', { day: 'numeric', month: 'long', timeZone: 'UTC' })
+  const zeitraum = `vom ${formatiert.format(woche.von)} bis ${formatiert.format(new Date(woche.bis.getTime() - TAG_MS))}`
+  const { spiele, siege, niederlagen } = bilanz(resultate)
+
+  if (spiele === 1) {
+    return `Diese Woche (${zeitraum}) stand für unsere Teams ein Spiel auf dem Programm – ${
+      siege === 1 ? 'und es endete mit einem Sieg.' : 'leider ohne Sieg.'
+    }`
+  }
+  if (siege === spiele) return `Was für eine Woche! Unsere Teams haben ${zeitraum} alle ${spiele} Spiele gewonnen.`
+  if (siege === 0) {
+    return `Eine schwierige Woche: In ${spiele} Spielen ${zeitraum} blieben unsere Teams ohne Sieg. Kopf hoch – die nächste Chance kommt bestimmt.`
+  }
+  if (siege > niederlagen) {
+    return `Eine erfolgreiche Woche für Rot-Blau: Aus ${spiele} Spielen ${zeitraum} holten unsere Teams ${anzahl(siege, 'Sieg', 'Siege')}.`
+  }
+  if (siege === niederlagen) {
+    return `Licht und Schatten bei Rot-Blau: ${spiele} Spiele ${zeitraum}, ${anzahl(siege, 'Sieg', 'Siege')} und ${anzahl(niederlagen, 'Niederlage', 'Niederlagen')}.`
+  }
+  return `Eine durchzogene Woche: Unsere Teams gewannen ${zeitraum} ${siege} von ${spiele} Spielen.`
+}
+
 /** Baut den Editor-Inhalt für den Wochenrückblick. */
-export function baueInhalt(resultate: Wochenspiel[], zeitraum: { von: Date; bis: Date }) {
-  const formatiert = new Intl.DateTimeFormat('de-CH', { day: 'numeric', month: 'long' })
-  const bisAnzeige = new Date(zeitraum.bis.getTime() - TAG_MS)
+export function baueInhalt(wochen: TeamWoche[], woche: Spielwoche) {
+  const resultate = alsListe(wochen)
+  const kinder: unknown[] = [absatz([textKnoten(einleitung(resultate, woche))])]
 
-  const kinder: unknown[] = [
-    absatz([
-      textKnoten(
-        `Alle Resultate unserer Teams von ${formatiert.format(zeitraum.von)} bis ${formatiert.format(bisAnzeige)}.`,
-      ),
-    ]),
-  ]
-
-  if (resultate.length === 0) {
-    kinder.push(absatz([textKnoten('In dieser Woche wurden keine Meisterschaftsspiele ausgetragen.')]))
-    return { root: { type: 'root', format: '', indent: 0, version: 1, direction: 'ltr', children: kinder } }
-  }
-
-  // Nach Team gruppieren, damit der Beitrag übersichtlich bleibt.
-  const gruppen = new Map<number, Wochenspiel[]>()
-  for (const eintrag of resultate) {
-    const liste = gruppen.get(eintrag.team.id) ?? []
-    liste.push(eintrag)
-    gruppen.set(eintrag.team.id, liste)
-  }
-
-  for (const liste of gruppen.values()) {
-    const team = liste[0].team
+  for (const { team, spiele, naechstes, rang } of wochen) {
+    if (spiele.length === 0) continue
     kinder.push(titelKnoten(team.name))
 
-    for (const { spiel } of liste) {
-      const eigenerName = team.sihfTeamName || 'Rot-Blau'
-      const heim = wirSindHeim(spiel, eigenerName)
-      const eigene = heim ? spiel.toreHeim! : spiel.toreGast!
-      const fremde = heim ? spiel.toreGast! : spiel.toreHeim!
-      const ausgang = eigene > fremde ? 'Sieg' : eigene < fremde ? 'Niederlage' : 'Unentschieden'
+    // Pro Spiel: das Resultat fett, darunter der Satz dazu.
+    for (const spiel of spiele) {
       const zusatz = spiel.entscheidung ? ` n.${spiel.entscheidung}` : ''
-
       kinder.push(
         absatz([
-          textKnoten(`${spiel.wochentag} ${spiel.datum}: `),
-          textKnoten(`${spiel.heim.name} ${spiel.toreHeim}:${spiel.toreGast}${zusatz} ${spiel.gast.name}`, true),
-          textKnoten(` – ${ausgang}`),
+          textKnoten(
+            `${spiel.wochentag} ${spiel.datum.slice(0, 6)}: ${spiel.heim.name} – ${spiel.gast.name} ${spiel.toreHeim}:${spiel.toreGast}${zusatz}`,
+            true,
+          ),
+          zeilenumbruch,
+          textKnoten(spielSatz(team, spiel) + drittelText(team, spiel)),
         ]),
       )
     }
+
+    const ausblick = [
+      rang
+        ? `In der Tabelle bedeutet das Rang ${rang.rang} von ${rang.teams} mit ${anzahl(rang.punkte, 'Punkt', 'Punkten')}.`
+        : '',
+      naechstes ? naechstesText(team, naechstes) : '',
+    ]
+      .filter(Boolean)
+      .join(' ')
+    if (ausblick) kinder.push(absatz([textKnoten(ausblick)]))
   }
+
+  kinder.push(
+    absatz([
+      textKnoten('Hopp Rot-Blau! ', true),
+      textKnoten('Spielpläne, Tabellen und Live-Resultate gibt es jederzeit auf den Teamseiten.'),
+    ]),
+  )
 
   return { root: { type: 'root', format: '', indent: 0, version: 1, direction: 'ltr', children: kinder } }
 }
 
-export function baueTitel(zeitraum: { von: Date; bis: Date }) {
-  const bisAnzeige = new Date(zeitraum.bis.getTime() - TAG_MS)
+export function baueTitel(woche: Spielwoche) {
+  const sonntag = new Date(woche.bis.getTime() - TAG_MS)
   const tagMonat = (datum: Date) =>
-    `${String(datum.getDate()).padStart(2, '0')}.${String(datum.getMonth() + 1).padStart(2, '0')}.`
-  return `Resultate der Woche: ${tagMonat(zeitraum.von)} – ${tagMonat(bisAnzeige)}${bisAnzeige.getFullYear()}`
+    `${String(datum.getUTCDate()).padStart(2, '0')}.${String(datum.getUTCMonth() + 1).padStart(2, '0')}.`
+  return `Wochenrückblick: ${tagMonat(woche.von)} – ${tagMonat(sonntag)}${sonntag.getUTCFullYear()}`
 }
 
-export function baueAuszug(resultate: Wochenspiel[]) {
-  if (resultate.length === 0) return 'In dieser Woche wurden keine Meisterschaftsspiele ausgetragen.'
-
-  const siege = resultate.filter(({ team, spiel }) => {
-    const eigenerName = team.sihfTeamName || 'Rot-Blau'
-    const heim = wirSindHeim(spiel, eigenerName)
-    const eigene = heim ? spiel.toreHeim! : spiel.toreGast!
-    const fremde = heim ? spiel.toreGast! : spiel.toreHeim!
-    return eigene > fremde
-  }).length
-
-  const spiele = resultate.length === 1 ? '1 Spiel' : `${resultate.length} Spiele`
-  return `${spiele}, ${siege === 1 ? '1 Sieg' : `${siege} Siege`}: alle Resultate unserer Teams im Überblick.`
+export function baueAuszug(wochen: TeamWoche[]) {
+  const { spiele, siege } = bilanz(alsListe(wochen))
+  return `${anzahl(spiele, 'Spiel', 'Spiele')}, ${anzahl(siege, 'Sieg', 'Siege')}: der Wochenrückblick mit allen Resultaten unserer Teams.`
 }

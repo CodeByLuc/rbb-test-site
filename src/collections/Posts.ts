@@ -24,7 +24,7 @@ export const Posts: CollectionConfig = {
       return { _status: { equals: 'published' } }
     },
     create: ({ req: { user } }) => Boolean(user),
-    // Autor:innen bearbeiten und löschen nur ihre eigenen Beiträge.
+    // Autoren bearbeiten und löschen nur ihre eigenen Beiträge.
     update: ({ req: { user } }) => {
       if (!user) return false
       if (user.role === 'admin') return true
@@ -40,7 +40,7 @@ export const Posts: CollectionConfig = {
     beforeValidate: [generateSlug('titel')],
     beforeChange: [
       ({ data, req, operation }) => {
-        // Autor:in automatisch setzen, damit niemand ein Feld ausfüllen muss.
+        // Autor automatisch setzen, damit niemand ein Feld ausfüllen muss.
         if (operation === 'create' && req.user && !data.autor) {
           data.autor = req.user.id
         }
@@ -125,7 +125,7 @@ export const Posts: CollectionConfig = {
       name: 'autor',
       type: 'relationship',
       relationTo: 'users',
-      label: 'Autor:in',
+      label: 'Autor',
       access: { update: () => false },
       admin: {
         position: 'sidebar',
@@ -154,7 +154,7 @@ export const Posts: CollectionConfig = {
         { label: 'News', value: 'news' },
         { label: 'Wochenresultate', value: 'resultate' },
       ],
-      // Wird nur vom Montags-Job gesetzt, darum im Editor unsichtbar.
+      // Wird nur vom Sonntags-Job gesetzt, darum im Editor unsichtbar.
       admin: { hidden: true },
     },
   ],

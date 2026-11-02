@@ -1,4 +1,4 @@
-import type { TabellenZeile } from '../lib/sihf'
+import type { TabellenLink, TabellenZeile } from '../lib/sihf'
 
 /**
  * Tabelle der Gruppe. Punkte nach dem Reglement von Swiss Ice Hockey: Sieg 3,
@@ -11,12 +11,12 @@ export function Tabelle({
   zeilen,
   eigenerName,
   titel = 'Tabelle',
-  tabellenUrl,
+  tabellenLink,
 }: {
   zeilen: TabellenZeile[]
   eigenerName: string
   titel?: string
-  tabellenUrl?: string | null
+  tabellenLink?: TabellenLink | null
 }) {
   if (zeilen.length === 0) return null
 
@@ -71,7 +71,7 @@ export function Tabelle({
                 <td className="py-3.5 pr-2 pl-5 text-center">
                   <span
                     className={`inline-flex h-7 w-7 items-center justify-center font-display text-base font-extrabold ${
-                      eigen ? 'bg-rot text-white' : 'text-white/60'
+                      eigen ? 'bg-rot-dunkel text-white' : 'text-white/60'
                     }`}
                   >
                     {zeile.rang}
@@ -107,14 +107,14 @@ export function Tabelle({
         <p className="text-xs text-white/50">
           Punkte: Sieg 3, Sieg nach Verlängerung 2, Niederlage nach Verlängerung 1.
         </p>
-        {tabellenUrl && (
+        {tabellenLink && (
           <a
-            href={tabellenUrl}
+            href={tabellenLink.url}
             target="_blank"
             rel="noopener noreferrer"
-            className="font-display text-xs tracking-widest text-white/60 uppercase hover:text-rot"
+            className="font-display text-xs tracking-widest text-white/60 uppercase hover:text-white"
           >
-            Offizielle Tabelle ↗
+            {tabellenLink.art === 'tabelle' ? 'Offizielle Tabelle ↗' : 'Team bei Swiss Ice Hockey ↗'}
           </a>
         )}
       </div>

@@ -74,18 +74,18 @@ export function Header({ logoUrl, teams }: HeaderProps) {
                 </Link>
 
                 {eintrag.pfad === '/teams' && teams.length > 0 && (
-                  <div className="kachel invisible absolute top-full left-0 w-72 translate-y-1 border-t-4 border-rot bg-nacht-tief opacity-0 shadow-2xl transition-all group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
+                  <div className="kachel invisible absolute top-full left-0 w-72 translate-y-1 border-t-4 border-rot bg-nacht-tief opacity-0 shadow-2xl transition-[opacity,translate,visibility] group-focus-within:visible group-focus-within:translate-y-0 group-focus-within:opacity-100 group-hover:visible group-hover:translate-y-0 group-hover:opacity-100">
                     {teams.map((team) => (
                       <Link
                         key={team.slug}
                         href={`/teams/${team.slug}`}
-                        className="flex items-baseline justify-between gap-3 border-b border-white/8 px-4 py-2.5 last:border-0 hover:bg-rot"
+                        className="fokus-innen group/zeile flex items-baseline justify-between gap-3 border-b border-white/8 px-4 py-2.5 last:border-0 hover:bg-rot-dunkel"
                       >
                         <span className="font-display text-base tracking-wide uppercase">
                           {team.name}
                         </span>
                         {team.liga && (
-                          <span className="text-xs text-white/50">{team.liga}</span>
+                          <span className="text-xs text-white/50 group-hover/zeile:text-white">{team.liga}</span>
                         )}
                       </Link>
                     ))}
@@ -99,7 +99,7 @@ export function Header({ logoUrl, teams }: HeaderProps) {
         <button
           type="button"
           onClick={() => setMenuOffen((offen) => !offen)}
-          className="knopf my-2.5 flex items-center gap-2 bg-rot px-4 font-display text-base tracking-wider uppercase transition-colors hover:bg-rot-dunkel lg:hidden"
+          className="knopf my-2.5 flex items-center gap-2 bg-rot-dunkel px-4 font-display text-base tracking-wider uppercase transition-colors hover:bg-rot-tief lg:hidden"
           aria-expanded={menuOffen}
           aria-controls="mobiles-menu"
         >

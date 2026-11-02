@@ -30,17 +30,21 @@ export default async function VorstandSeite() {
             {vorstand.map((person, index) => (
               <article
                 key={person.id ?? index}
-                className="kachel flex items-center gap-4 bg-white p-5 shadow-sm"
+                className="kachel relative flex items-center gap-4 bg-white p-5 shadow-sm"
               >
                 <Bild
                   bild={person.foto}
                   groesse="thumbnail"
                   className="h-20 w-20 shrink-0 rounded-full object-cover"
                   sizes="80px"
+                  // Ohne Foto trägt der Name die Karte, statt eines leeren Platzhalters.
+                  ersatz={
+                    <div className="trikotband-schmal absolute inset-x-0 top-0" aria-hidden="true" />
+                  }
                 />
                 <div className="min-w-0">
                   <p className="font-display text-lg text-nacht uppercase">{person.name}</p>
-                  <p className="text-sm text-rot">{person.funktion}</p>
+                  <p className="text-sm text-rot-dunkel">{person.funktion}</p>
                   {person.email && (
                     <a
                       href={`mailto:${person.email}`}

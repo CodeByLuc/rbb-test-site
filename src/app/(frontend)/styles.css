@@ -72,9 +72,42 @@
     line-height: 0.95;
   }
 
+  /*
+    Zweifarbig, damit der Rahmen auf jeder Fläche sichtbar bleibt: Weiss trägt
+    auf Rot und Dunkelblau, das dunkle Aussenband auf hellen Flächen.
+  */
   :focus-visible {
-    outline: 3px solid var(--color-rot);
-    outline-offset: 2px;
+    outline: 3px solid var(--color-nacht-tief);
+    outline-offset: 3px;
+    box-shadow: 0 0 0 3px #fff;
+  }
+
+  /* Bewegung abschalten, wenn das im Betriebssystem so eingestellt ist. */
+  @media (prefers-reduced-motion: reduce) {
+    *,
+    *::before,
+    *::after {
+      animation-duration: 0.01ms !important;
+      animation-iteration-count: 1 !important;
+      transition-duration: 0.01ms !important;
+      scroll-behavior: auto !important;
+    }
+
+    img {
+      scale: none !important;
+    }
+  }
+}
+
+/*
+  Fokusrahmen nach innen, für Elemente in einer Kachel: deren overflow-hidden
+  würde einen Rahmen aussen abschneiden.
+*/
+@utility fokus-innen {
+  &:focus-visible {
+    outline-color: #fff;
+    outline-offset: -3px;
+    box-shadow: none;
   }
 }
 

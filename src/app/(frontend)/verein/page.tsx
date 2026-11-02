@@ -77,7 +77,7 @@ export default async function VereinSeite() {
                   href={anmeldeformular.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="knopf bg-rot px-5 py-3 font-display text-sm tracking-wide uppercase hover:bg-rot-dunkel"
+                  className="knopf bg-rot-dunkel px-5 py-3 font-display text-sm tracking-wide uppercase hover:bg-rot-tief"
                 >
                   Anmeldeformular
                 </a>

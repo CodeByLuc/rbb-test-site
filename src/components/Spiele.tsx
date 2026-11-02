@@ -25,8 +25,8 @@ const langtext: Record<Ausgang, string> = {
 }
 
 const marke: Record<Ausgang, string> = {
-  sieg: 'bg-emerald-500 text-white',
-  niederlage: 'bg-rot text-white',
+  sieg: 'bg-emerald-700 text-white',
+  niederlage: 'bg-rot-dunkel text-white',
   remis: 'bg-white/25 text-white',
 }
 
@@ -39,6 +39,37 @@ function AusgangMarke({ ergebnis }: { ergebnis: Ausgang }) {
     >
       {kuerzel[ergebnis]}
       <span className="sr-only">{langtext[ergebnis]}</span>
+    </span>
+  )
+}
+
+/**
+ * Marke «Live» mit pulsierendem Punkt für ein laufendes Spiel. `hell` für
+ * roten Hintergrund, wo eine rote Marke verschwinden würde.
+ */
+export function LiveMarke({ hell = false }: { hell?: boolean }) {
+  const farbe = hell ? 'bg-white text-rot-dunkel' : 'bg-rot-dunkel text-white'
+  const punkt = hell ? 'bg-rot-dunkel' : 'bg-white'
+  return (
+    <span
+      className={`etikett inline-flex shrink-0 items-center gap-1.5 px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase ${farbe}`}
+    >
+      <span className="relative flex h-2 w-2" aria-hidden="true">
+        <span
+          className={`absolute inline-flex h-full w-full rounded-full opacity-75 motion-safe:animate-ping ${punkt}`}
+        />
+        <span className={`relative inline-flex h-2 w-2 rounded-full ${punkt}`} />
+      </span>
+      Live
+    </span>
+  )
+}
+
+/** Zurückhaltende Marke für ein abgeschlossenes Spiel. */
+export function BeendetMarke() {
+  return (
+    <span className="etikett shrink-0 border border-white/40 px-2 py-0.5 font-display text-xs tracking-[0.2em] text-white/85 uppercase">
+      Beendet
     </span>
   )
 }
@@ -60,7 +91,7 @@ export function NaechstesSpiel({
     <div className="kachel eisglanz relative overflow-hidden bg-blau text-white shadow-2xl">
       <div className="relative px-5 py-7 sm:px-8 sm:py-9">
         <div className="mb-5 flex flex-wrap items-center gap-3">
-          <span className="etikett bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
+          <span className="etikett bg-rot-dunkel px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
             Nächstes Spiel
           </span>
           {teamName && (
@@ -77,12 +108,12 @@ export function NaechstesSpiel({
 
         <div className="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 border-t border-white/20 pt-4 font-display text-lg tracking-wide uppercase">
           <span>
-            <span className="text-rot">{spiel.wochentag}</span> {spiel.datum}
+            <span className="font-extrabold">{spiel.wochentag}</span> {spiel.datum}
           </span>
           <span className="text-white/80">{spiel.zeit}</span>
-          <span className="text-white/60">{heimIstWir ? 'Heim' : 'Auswärts'}</span>
+          <span className="text-white/80">{heimIstWir ? 'Heim' : 'Auswärts'}</span>
         </div>
-        {spiel.ort && <p className="mt-3 text-sm text-white/70">{spiel.ort}</p>}
+        {spiel.ort && <p className="mt-3 text-sm text-white/85">{spiel.ort}</p>}
       </div>
     </div>
   )
@@ -130,27 +161,40 @@ function TeamAnzeige({
   )
 }
 
-/** Grosse Anzeigetafel für das letzte Resultat. */
+/**
+ * Grosse Anzeigetafel für das letzte Resultat. Läuft das Spiel gerade
+ * (`live`), steht statt «Letztes Spiel» die Live-Marke mit dem aktuellen
+ * Spielabschnitt; ein abgeschlossenes Spiel trägt die Marke «Beendet».
+ */
 export function LetztesResultat({
   spiel,
   eigenerName,
+  live = false,
+  periode,
 }: {
   spiel: SihfSpiel
   eigenerName: string
+  live?: boolean
+  periode?: string
 }) {
-  const ergebnis = ausgang(spiel, eigenerName)
+  const ergebnis = live ? null : ausgang(spiel, eigenerName)
   const heimIstWir = istEigenes(spiel.heim.name, eigenerName)
 
   return (
     <div className="kachel eisglanz relative overflow-hidden bg-nacht-tief text-white shadow-2xl">
       <div className="relative px-5 py-7 sm:px-8 sm:py-9">
         <div className="mb-6 flex flex-wrap items-center gap-3">
-          <span className="etikett bg-rot px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
-            Letztes Spiel
-          </span>
+          {live ? (
+            <LiveMarke />
+          ) : (
+            <span className="etikett bg-rot-dunkel px-2.5 py-1 font-display text-xs tracking-[0.2em] uppercase">
+              Letztes Spiel
+            </span>
+          )}
           <span className="font-display text-base tracking-wide text-white/60 uppercase">
-            {spiel.wochentag}, {spiel.datum} · {spiel.zeit}
+            {spiel.wochentag}, {spiel.datum} · {live && periode ? periode : spiel.zeit}
           </span>
+          {!live && <BeendetMarke />}
         </div>
 
         <div className="grid grid-cols-[minmax(0,1fr)_auto_minmax(0,1fr)] items-center gap-3 sm:gap-5">
@@ -193,7 +237,7 @@ export function LetztesResultat({
               href={SIHF_SPIEL_URL(spiel.gameId)}
               target="_blank"
               rel="noopener noreferrer"
-              className="ml-auto font-display text-xs tracking-widest text-white/45 uppercase hover:text-rot"
+              className="ml-auto font-display text-xs tracking-widest text-white/60 uppercase hover:text-white"
             >
               Spieldetails ↗
             </a>

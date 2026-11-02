@@ -49,7 +49,7 @@ export default async function SponsorenSeite() {
                   href={blatt.url}
                   target="_blank"
                   rel="noopener noreferrer"
-                  className="knopf block bg-rot px-5 py-3 text-center font-display text-sm tracking-wide text-white uppercase hover:bg-rot-dunkel"
+                  className="knopf block bg-rot-dunkel px-5 py-3 text-center font-display text-sm tracking-wide text-white uppercase hover:bg-rot-tief"
                 >
                   {blatt.titel ?? 'Sponsoring-Unterlagen'} herunterladen
                 </a>

@@ -1,4 +1,5 @@
-import type { SihfSpiel, TabellenZeile } from '../lib/sihf'
+import type { SihfSpiel, TabellenLink, TabellenZeile } from '../lib/sihf'
+import { LiveMarke } from './Spiele'
 
 /**
  * Kurzübersicht eines Teams für schmale Bildschirme.
@@ -24,10 +25,12 @@ function ausSicht(spiel: SihfSpiel, eigenerName: string) {
   }
 }
 
-function Zeile({ titel, children }: { titel: string; children: React.ReactNode }) {
+function Zeile({ titel, children }: { titel: React.ReactNode; children: React.ReactNode }) {
   return (
     <div className="border-b border-white/10 px-4 py-3 last:border-0">
-      <p className="mb-1 font-display text-xs tracking-[0.2em] text-white/45 uppercase">{titel}</p>
+      <div className="mb-1 flex items-center gap-2 font-display text-xs tracking-[0.2em] text-white/60 uppercase">
+        {titel}
+      </div>
       {children}
     </div>
   )
@@ -39,7 +42,9 @@ export function TeamKompakt({
   naechstes,
   eigenerName,
   liga,
-  tabellenUrl,
+  tabellenLink,
+  live = false,
+  periode,
   className = '',
 }: {
   tabelle: TabellenZeile[]
@@ -47,7 +52,10 @@ export function TeamKompakt({
   naechstes?: SihfSpiel | null
   eigenerName: string
   liga?: string | null
-  tabellenUrl?: string | null
+  tabellenLink?: TabellenLink | null
+  /** Das «letzte» Spiel läuft gerade. */
+  live?: boolean
+  periode?: string
   className?: string
 }) {
   const eigeneZeile = tabelle.find((z) => istEigenes(z.name, eigenerName))
@@ -70,7 +78,7 @@ export function TeamKompakt({
       <div className="flex items-center justify-between gap-3 bg-nacht-tief px-4 py-3">
         <h2 className="text-xl">{liga ?? 'Spielbetrieb'}</h2>
         {eigeneZeile && (
-          <span className="knopf bg-rot px-2.5 py-1 font-display text-sm tracking-wide uppercase">
+          <span className="knopf bg-rot-dunkel px-2.5 py-1 font-display text-sm tracking-wide uppercase">
             Rang {eigeneZeile.rang} von {tabelle.length}
           </span>
         )}
@@ -85,7 +93,7 @@ export function TeamKompakt({
               aus {eigeneZeile.spiele} {eigeneZeile.spiele === 1 ? 'Spiel' : 'Spielen'}
             </span>
           </p>
-          <p className="mt-1 text-xs text-white/45">
+          <p className="mt-1 text-xs text-white/60">
             {siegeGesamt} Siege · {niederlagenGesamt} Niederlagen · Tore {eigeneZeile.tore}:
             {eigeneZeile.gegentore}
           </p>
@@ -96,15 +104,25 @@ export function TeamKompakt({
         (() => {
           const s = ausSicht(letztes, eigenerName)
           const gewonnen = (s.eigene ?? 0) > (s.fremde ?? 0)
-          const unentschieden = s.eigene === s.fremde
+          const unentschieden = live || s.eigene === s.fremde
           return (
-            <Zeile titel="Letztes Spiel">
+            <Zeile
+              titel={
+                live ? (
+                  <>
+                    <LiveMarke /> {periode}
+                  </>
+                ) : (
+                  'Letztes Spiel · Beendet'
+                )
+              }
+            >
               <div className="flex items-center justify-between gap-3">
                 <div className="min-w-0">
                   <p className="truncate font-display text-lg leading-tight tracking-wide uppercase">
                     {s.heimspiel ? 'gegen' : 'bei'} {s.gegner}
                   </p>
-                  <p className="text-xs text-white/45">
+                  <p className="text-xs text-white/60">
                     {letztes.wochentag} {letztes.datum}
                   </p>
                 </div>
@@ -136,14 +154,16 @@ export function TeamKompakt({
           )
         })()}
 
-      {tabellenUrl && (
+      {tabellenLink && (
         <a
-          href={tabellenUrl}
+          href={tabellenLink.url}
           target="_blank"
           rel="noopener noreferrer"
-          className="block border-t border-white/10 px-4 py-3 font-display text-sm tracking-widest text-white/55 uppercase hover:bg-white/5 hover:text-rot"
+          className="block border-t border-white/10 px-4 py-3 font-display text-sm tracking-widest text-white/55 uppercase hover:bg-white/5 hover:text-white"
         >
-          Ganze Tabelle bei Swiss Ice Hockey ↗
+          {tabellenLink.art === 'tabelle'
+            ? 'Ganze Tabelle bei Swiss Ice Hockey ↗'
+            : 'Team bei Swiss Ice Hockey ↗'}
         </a>
       )}
     </section>

@@ -64,7 +64,6 @@ const teams = [
     sihfTeamName: 'EHC Rot-Blau Bern-Bümpliz',
     sihfTeamId: '103916',
     sihfLeagueId: '19',
-    tabellenUrl: 'https://www.sihf.ch/de/leagues-cup/clubs/aktivligen/#/clubs/4-league',
     trainingszeiten: [
       { tag: 'Dienstag', zeit: '20:15 – 21:45', ort: 'Eisstadion Weyermannshaus' },
       { tag: 'Donnerstag', zeit: '20:15 – 21:45', ort: 'Eisstadion Weyermannshaus' },
@@ -80,7 +79,6 @@ const teams = [
     sihfTeamName: 'EHC Rot-Blau Bern-Bümpliz',
     sihfTeamId: '105234',
     sihfLeagueId: '104',
-    tabellenUrl: 'https://www.sihf.ch/de/leagues-cup/women',
     trainingszeiten: [{ tag: 'Mittwoch', zeit: '20:00 – 21:30', ort: 'Eisstadion Weyermannshaus' }],
   },
   {
@@ -100,7 +98,6 @@ const teams = [
     sihfTeamName: 'EHC Rot-Blau Bern-Bümpliz',
     sihfTeamId: '105386',
     sihfLeagueId: '124',
-    tabellenUrl: 'https://www.sihf.ch/de/leagues-cup/junioren',
     trainingszeiten: [{ tag: 'Mittwoch', zeit: '18:00 – 19:30', ort: 'Eisstadion Weyermannshaus' }],
   },
   {
@@ -223,18 +220,18 @@ async function main() {
         'Am vergangenen Wochenende war das Eisstadion Weyermannshaus zwei Tage lang der Mittelpunkt des Nachwuchseishockeys. Zwölf Teams aus der ganzen Region kämpften am Rot-Blau Cup um den Turniersieg.',
         { h2: 'Ein Wochenende voller Höhepunkte' },
         'Bereits die Gruppenspiele am Samstag zeigten, wie eng die Teams beieinander liegen. Entschieden wurde manche Partie erst im Penaltyschiessen – und jedes Mal war die Stimmung auf den Rängen entsprechend.',
-        'Ein besonderer Dank geht an die vielen Helferinnen und Helfer. Ohne die Eltern an der Kasse, im Buffet und an der Bande wäre ein Turnier dieser Grösse nicht möglich.',
+        'Ein besonderer Dank geht an die vielen Helfer. Ohne die Eltern an der Kasse, im Buffet und an der Bande wäre ein Turnier dieser Grösse nicht möglich.',
       ]),
       datum: '2026-03-15T18:00:00.000Z',
     },
     {
-      titel: 'Wir suchen Helferinnen und Helfer für den Matchbetrieb',
+      titel: 'Wir suchen Helfer für den Matchbetrieb',
       auszug:
         'Für Kasse, Buffet und Anschriftentisch suchen wir Menschen, die ab und zu ein paar Stunden mit anpacken.',
       inhalt: richText([
         'Ein Heimspiel läuft nur, wenn rund um das Eis alles stimmt. Für die kommende Saison suchen wir darum Verstärkung im Matchbetrieb.',
         { h2: 'Das sind die Aufgaben' },
-        'An der Kasse begrüssen Sie die Zuschauerinnen und Zuschauer, im Buffet sorgen Sie für Verpflegung, und am Anschriftentisch halten Sie Tore und Strafen fest. Alles wird vorher gemeinsam angeschaut – Vorkenntnisse braucht es nicht.',
+        'An der Kasse begrüssen Sie die Zuschauer, im Buffet sorgen Sie für Verpflegung, und am Anschriftentisch halten Sie Tore und Strafen fest. Alles wird vorher gemeinsam angeschaut – Vorkenntnisse braucht es nicht.',
         'Wer sich ein paar Einsätze pro Saison vorstellen kann, meldet sich am besten direkt beim Vorstand.',
       ]),
       datum: '2026-04-02T09:30:00.000Z',
@@ -323,7 +320,7 @@ async function main() {
         {
           titel: 'Goalie-Training',
           beschreibung:
-            'Spezialtraining für Torhüterinnen und Torhüter aller Teams: Stellungsspiel, Beinarbeit und Puckkontrolle.',
+            'Spezialtraining für die Torhüter aller Teams: Stellungsspiel, Beinarbeit und Puckkontrolle.',
           termine: 'Mittwoch 17:00 – 18:00',
           ort: 'Eisstadion Weyermannshaus',
           kontakt: 'goalies@rot-blau.ch',
@@ -345,7 +342,7 @@ async function main() {
       ]),
       aktuell: richText([
         'Heute betreibt der Verein zwei Aktivmannschaften, ein Damenteam, mehrere Nachwuchsteams, eine Hockeyschule und eine Seniorengruppe. Trainiert und gespielt wird im Eisstadion Weyermannshaus.',
-        'Getragen wird der Betrieb von Freiwilligen: Trainerinnen und Trainer, Betreuende, Eltern und Helferinnen und Helfer im Matchbetrieb.',
+        'Getragen wird der Betrieb von Freiwilligen: Trainer, Betreuer, Eltern und Helfer im Matchbetrieb.',
       ]),
       vorstand: [
         { name: 'Vorname Name', funktion: 'Präsident', email: 'praesident@rot-blau.ch' },
