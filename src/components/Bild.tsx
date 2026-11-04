@@ -22,6 +22,14 @@ export function bildDaten(bild: BildQuelle, groesse?: Groesse) {
   }
 }
 
+/**
+ * Bei manchen Teams hängt im Redaktionssystem noch die Datei
+ * «teamfoto-platzhalter» – ein altes Foto einer Nachwuchsmannschaft. Es gilt
+ * als «kein Foto», damit kein Team mit dem Bild eines anderen erscheint.
+ */
+export const echtesTeamfoto = (bild: BildQuelle): BildQuelle =>
+  bild && typeof bild === 'object' && /platzhalter/i.test(bild.filename ?? '') ? null : bild
+
 type BildProps = {
   bild: BildQuelle
   groesse?: Groesse

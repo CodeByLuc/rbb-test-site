@@ -1,7 +1,7 @@
 import Link from 'next/link'
 
 import type { Einstellungen, Team } from '../payload-types'
-import { Bild, bildDaten } from './Bild'
+import { Bild, bildDaten, echtesTeamfoto } from './Bild'
 import { WappenSvg } from './Logo'
 
 /**
@@ -58,7 +58,7 @@ export function TeamFinder({ teams }: { teams: Team[] }) {
       <div className="grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4">
         {sortiert.map((team) => {
           const alter = altersangabe(team)
-          const foto = bildDaten(team.teamfoto, 'card')
+          const foto = bildDaten(echtesTeamfoto(team.teamfoto), 'card')
           // Ohne Foto bliebe sonst eine grosse leere Fläche stehen – dann wird
           // die Kachel flach und lebt von Schrift und Farbe.
           const hoehe = foto ? 'min-h-32 sm:min-h-36' : ''
@@ -74,7 +74,7 @@ export function TeamFinder({ teams }: { teams: Team[] }) {
               {foto ? (
                 <>
                   <Bild
-                    bild={team.teamfoto}
+                    bild={echtesTeamfoto(team.teamfoto)}
                     groesse="card"
                     className="absolute inset-0 h-full w-full object-cover opacity-55 transition-all duration-300 group-hover:scale-105 group-hover:opacity-70"
                     sizes="(max-width: 640px) 50vw, (max-width: 1024px) 33vw, 20rem"

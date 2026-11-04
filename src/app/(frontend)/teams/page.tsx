@@ -1,7 +1,7 @@
 import type { Metadata } from 'next'
 import Link from 'next/link'
 
-import { Bild } from '../../../components/Bild'
+import { Bild, echtesTeamfoto } from '../../../components/Bild'
 import { holeTeams } from '../../../lib/daten'
 import type { Team } from '../../../payload-types'
 
@@ -20,18 +20,22 @@ const kategorien = [
 ] as const
 
 function TeamKachel({ team }: { team: Team }) {
+  // Ohne eigenes Teamfoto bleibt die Kachel schlicht dunkelblau – kein Ersatzbild.
+  const foto = echtesTeamfoto(team.teamfoto)
+
   return (
     <Link
       href={`/teams/${team.slug}`}
       className="kachel group relative isolate flex min-h-64 flex-col justify-end overflow-hidden bg-nacht text-white shadow-lg"
     >
-      <Bild
-        bild={team.teamfoto}
-        groesse="card"
-        className="absolute inset-0 h-full w-full object-cover object-[50%_20%] opacity-55 transition-[opacity,scale] duration-500 group-hover:scale-105 group-hover:opacity-70"
-        sizes="(max-width: 640px) 100vw, 33vw"
-        ersatz={<div className="eisglanz absolute inset-0 bg-blau-dunkel" />}
-      />
+      {foto && (
+        <Bild
+          bild={foto}
+          groesse="card"
+          className="absolute inset-0 h-full w-full object-cover object-[50%_20%] opacity-55 transition-[opacity,scale] duration-500 group-hover:scale-105 group-hover:opacity-70"
+          sizes="(max-width: 640px) 100vw, 33vw"
+        />
+      )}
       <div className="absolute inset-0 bg-gradient-to-t from-nacht-tief via-nacht-tief/55 to-transparent" />
 
       <div className="relative p-5">

@@ -1,6 +1,6 @@
 import Link from 'next/link'
 
-import { Bild, bildDaten } from '../../components/Bild'
+import { Bild, bildDaten, echtesTeamfoto } from '../../components/Bild'
 import { PostKarte } from '../../components/PostKarte'
 import { ResultatLive } from '../../components/ResultatLive'
 import { SponsorenWidget } from '../../components/SponsorenWidget'
@@ -74,7 +74,8 @@ export default async function Startseite() {
   const resultate = [...plaene].sort((a, b) => sortierzeit(b) - sortierzeit(a))
 
   const [neuester, ...weitere] = posts
-  const heroFoto = teams.find((team) => team.teamfoto)?.teamfoto ?? neuester?.titelbild
+  const heroFoto =
+    teams.map((team) => echtesTeamfoto(team.teamfoto)).find(Boolean) ?? neuester?.titelbild
   const hero = bildDaten(heroFoto, 'hero')
   const bandFoto = stimmungsbild ?? null
 

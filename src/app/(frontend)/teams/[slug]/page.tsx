@@ -2,7 +2,7 @@ import type { Metadata } from 'next'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-import { Bild, bildDaten } from '../../../../components/Bild'
+import { Bild, bildDaten, echtesTeamfoto } from '../../../../components/Bild'
 import { Fliesstext } from '../../../../components/Fliesstext'
 import { PostKarte } from '../../../../components/PostKarte'
 import { SpielerFoto } from '../../../../components/SpielerFoto'
@@ -94,7 +94,9 @@ export default async function TeamSeite({ params }: Props) {
   const spieler = team.spieler ?? []
   const trainer = team.trainer ?? []
   const trainings = team.trainingszeiten ?? []
-  const teamfoto = bildDaten(team.teamfoto, 'hero')
+  // Ohne eigenes Teamfoto erscheint oben einfach keines.
+  const foto = echtesTeamfoto(team.teamfoto)
+  const teamfoto = bildDaten(foto, 'hero')
 
   return (
     <>
@@ -140,7 +142,7 @@ export default async function TeamSeite({ params }: Props) {
           {teamfoto && (
             <div className="kachel relative overflow-hidden shadow-xl">
               <Bild
-                bild={team.teamfoto}
+                bild={foto}
                 groesse="hero"
                 priority
                 className="block h-auto w-full"
